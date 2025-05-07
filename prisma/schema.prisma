@@ -1,0 +1,76 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Classroom {
+  id        String   @id @default(uuid())
+  userId    String   // profesorul (creatorul) cursului
+  name      String   @db.Text
+  section   String?
+  subject   String?
+  room      String?
+  code      String   @unique
+
+  users     UserClassroom[]
+  posts     Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserClassroom {
+  id           String   @id @default(uuid())
+  classroomId  String
+  userId       String
+
+  classroom    Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+
+  @@unique([classroomId, userId])
+}
+
+model Post {
+  id          String     @id @default(uuid())
+  authorId    String     
+  authorName  String?
+  classroomId String
+  title       String     // <-- adăugat aici
+  content     String     @db.Text
+
+  classroom   Classroom  @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  @@index([classroomId])
+  materials   Material[]
+
+  createdAt   DateTime   @default(now())
+}
+
+model Material {
+  id        String        @id @default(uuid())
+  name      String?
+  postId    String?
+  title     String
+  type      MaterialType
+  filePath  String?       @db.Text
+  url       String?       @db.Text
+
+  post      Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+
+  uploadedAt DateTime     @default(now())
+}
+
+enum MaterialType {
+  FILE
+  YOUTUBE
+  DRIVE
+  LINK
+}
