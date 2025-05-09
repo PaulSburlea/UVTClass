@@ -14,11 +14,12 @@ import { CourseFinalize } from '../_components/course-finalize';
 
 
 
-const CourseIdPage = async ( {
-    params
-}: {
-    params: { courseId: string }
-}) => {
+const CourseIdPage = async (
+    props: {
+        params: Promise<{ courseId: string }>
+    }
+) => {
+    const params = await props.params;
     const { userId } = await auth();
 
     if (!userId) {

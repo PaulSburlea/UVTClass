@@ -1,21 +1,17 @@
-// app/(dashboard)/teacher/courses/[courseId]/page.tsx
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
-import CourseCard from "./_components/course-info";
-import { PostForm } from "./_components/post-form";
-import { PostList } from "./_components/post-list";
-
-
+import { ClientCoursePage } from "./_components/client-course-page";
 
 export const dynamic = "force-dynamic";
 
 interface CourseIdPageProps {
-  params: { courseId: string };
+  params: Promise<{ courseId: string }>;
 }
 
-const CourseIdPage = async ({ params }: CourseIdPageProps) => {
+const CourseIdPage = async (props: CourseIdPageProps) => {
+  const params = await props.params;
   const { userId } = await auth();
   if (!userId) return redirect("/");
 
@@ -27,11 +23,7 @@ const CourseIdPage = async ({ params }: CourseIdPageProps) => {
   return (
     <>
       <CourseSubNavbar courseId={params.courseId} />
-      <div className="pt-[50px] px-20 flex flex-col items-center">
-        <CourseCard course={course} currentUserId={userId} />
-        <PostForm courseId={params.courseId} />
-        <PostList courseId={params.courseId} refetchKey={0} />
-      </div>
+      <ClientCoursePage courseId={params.courseId} userId={userId} course={course} />
     </>
   );
 };

@@ -2,6 +2,7 @@
 
 import { useRef, useState, FormEvent } from "react";
 import useDrivePicker from "react-google-drive-picker";
+import { toast } from "react-hot-toast";
 import {
   PlusCircle,
   MinusCircle,
@@ -9,6 +10,7 @@ import {
   Youtube,
   FilePlus2,
   Link as LinkIcon,
+  XCircle,
 } from "lucide-react";
 
 export function PostForm({
@@ -38,7 +40,6 @@ export function PostForm({
       Object.assign(fakeFile, { __external: true, __type: type, __url: url }),
     ]);
   };
-  
 
   const handleFileUpload = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -60,12 +61,12 @@ export function PostForm({
         if (!res.ok) throw new Error(`Eroare la fișierul ${file.name}`);
       }
 
-      alert("Fișiere încărcate cu succes!");
+      toast.success("Fișiere încărcate cu succes!");
       onMaterialAdded?.();
       fileInputRef.current!.value = "";
       setFilesPreview([]);
     } catch (err: any) {
-      alert("Eroare la încărcare: " + err.message);
+      toast.error("Eroare la încărcare: " + err.message);
     } finally {
       setIsUploading(false);
     }
@@ -96,23 +97,30 @@ export function PostForm({
     });
   
     if (response.ok) {
-      alert("Postare salvată!");
+      toast.success("Postarea a fost publicată cu succes!");
       setTitle("");
       setText("");
       setFilesPreview([]);
       setOpen(false);
       onMaterialAdded?.();
     } else {
-      alert("Eroare la salvare.");
+      toast.error("Eroare la salvare.");
     }
   };
-  
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      setFilesPreview([...filesPreview, ...Array.from(files)]);
+      const newFiles = Array.from(files);
+      const uniqueFiles = newFiles.filter((file) =>
+        !filesPreview.some((previewFile) => previewFile.name === file.name)
+      );
+      setFilesPreview((prev) => [...prev, ...uniqueFiles]);
     }
+  };
+
+  const handleRemoveFile = (fileToRemove: File) => {
+    setFilesPreview(filesPreview.filter((file) => file !== fileToRemove));
   };
 
   return (
@@ -148,40 +156,46 @@ export function PostForm({
             <div className="mt-4 space-y-2">
               <h3 className="font-semibold">Preview fișiere:</h3>
               <div className="flex gap-3 flex-wrap">
-              {filesPreview.map((file, index) => {
-  const external = (file as any).__external;
-  const url = (file as any).__url;
-  const type = (file as any).__type;
+                {filesPreview.map((file, index) => {
+                  const external = (file as any).__external;
+                  const url = (file as any).__url;
+                  const type = (file as any).__type;
 
-  return (
-    <div key={index} className="flex flex-col items-center">
-      {external ? (
-        type === "YOUTUBE" ? (
-          <iframe
-            src={`https://www.youtube.com/embed/${new URL(url).searchParams.get("v")}`}
-            className="w-40 h-24 rounded-md"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          />
-        ) : (
-          <a href={url} target="_blank" className="text-sm text-blue-600 underline">
-            Link extern ({type})
-          </a>
-        )
-      ) : file.type.startsWith("image") ? (
-        <img
-          src={URL.createObjectURL(file)}
-          alt="Preview"
-          className="w-20 h-20 object-cover rounded-md"
-        />
-      ) : (
-        <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded-md text-xs text-center px-1">
-          {file.name}
-        </div>
-      )}
-    </div>
-  );
-})}
-
+                  return (
+                    <div key={index} className="relative flex flex-col items-center">
+                      <button
+                        type="button"
+                        className="absolute top-0 right-0 text-red-600"
+                        onClick={() => handleRemoveFile(file)}
+                      >
+                        <XCircle size={16} />
+                      </button>
+                      {external ? (
+                        type === "YOUTUBE" ? (
+                          <iframe
+                            src={`https://www.youtube.com/embed/${new URL(url).searchParams.get("v")}`}
+                            className="w-40 h-24 rounded-md"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          />
+                        ) : (
+                          <a href={url} target="_blank" className="text-sm text-blue-600 underline">
+                            Link extern ({type})
+                          </a>
+                        )
+                      ) : file.type.startsWith("image") ? (
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt="Preview"
+                          className="w-20 h-20 object-cover rounded-md"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 flex items-center justify-center bg-gray-200 rounded-md text-xs text-center px-1">
+                          {file.name}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

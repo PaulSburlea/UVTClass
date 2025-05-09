@@ -21,3 +21,28 @@ export async function DELETE(
     return new NextResponse("Eroare la server", { status: 500 });
   }
 }
+
+export async function PUT(
+  req: Request,
+  context: { params: Promise<{ postId: string }> }
+) {
+  const { postId } = await context.params;
+  const body = await req.json();
+  const { title, content } = body;
+
+  if (!postId || !title || !content) {
+    return new NextResponse("Lipsesc date necesare", { status: 400 });
+  }
+
+  try {
+    const updatedPost = await db.post.update({
+      where: { id: postId },
+      data: { title, content },
+    });
+
+    return NextResponse.json(updatedPost);
+  } catch (error) {
+    console.error("Eroare la actualizarea postării:", error);
+    return new NextResponse("Eroare la server", { status: 500 });
+  }
+}
