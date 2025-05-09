@@ -2,10 +2,8 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { db } from "@/lib/db"
 
-export async function PATCH(
-    req: Request,
-    { params }: { params: { courseId: string } }
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ courseId: string }> }) {
+    const params = await props.params;
     try {
         const { userId } = await auth()
         const { courseId } = params;
@@ -30,13 +28,11 @@ export async function PATCH(
     } catch (error) {
         console.error("[COURSE_ID]", error)
         return new NextResponse("Internal Error", { status: 500 })
-    }    
+    }
 }
 
-export async function DELETE(
-    req: Request,
-    { params }: { params: { courseId: string } }
-  ) {
+export async function DELETE(req: Request, props: { params: Promise<{ courseId: string }> }) {
+    const params = await props.params;
     try {
       const { userId } = await auth();
   
@@ -56,4 +52,4 @@ export async function DELETE(
       console.error("[COURSE_DELETE]", error);
       return new NextResponse("Internal Error", { status: 500 });
     }
-  }
+}

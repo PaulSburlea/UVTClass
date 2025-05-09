@@ -8,10 +8,11 @@ import CourseCard from "../../../teacher/courses/[courseId]/_components/course-i
 export const dynamic = "force-dynamic";
 
 interface CourseIdPageProps {
-  params: { courseId: string };
+  params: Promise<{ courseId: string }>;
 }
 
-const StudentCoursePage = async ({ params }: CourseIdPageProps) => {
+const StudentCoursePage = async (props: CourseIdPageProps) => {
+  const params = await props.params;
   const { userId } = await auth();
   if (!userId) return redirect("/");
 

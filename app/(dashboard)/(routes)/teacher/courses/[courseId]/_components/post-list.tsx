@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
+import { toast } from "react-hot-toast";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -9,7 +10,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
-import { ConfirmModal } from "./confirm-modal"; // Asigură-te că path-ul este corect
+import { ConfirmModal } from "./confirm-modal";
+import { EditPostModal } from "./edit-post-modal";
 
 interface Post {
   id: string;
@@ -32,9 +34,11 @@ interface Material {
 export function PostList({
   courseId,
   refetchKey,
+  onPostUpdated, // Primiți funcția pentru a notifica că postarea a fost actualizată
 }: {
   courseId: string;
   refetchKey: number;
+  onPostUpdated: () => void;
 }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,9 +62,10 @@ export function PostList({
     fetchPosts();
   }, [courseId, refetchKey]);
 
-  const handleEdit = (postId: string) => {
-    console.log("Editează postarea:", postId);
-    // Navighează către o pagină sau deschide un modal
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+
+  const handleEdit = (post: Post) => {
+    setEditingPost(post);
   };
 
   const handleDeleteClick = (post: Post) => {
@@ -74,6 +79,7 @@ export function PostList({
       await fetch(`/api/post/${postToDelete.id}`, {
         method: "DELETE",
       });
+      toast.success("Postarea a fost ștearsă cu succes!");
       setPosts((prev) => prev.filter((p) => p.id !== postToDelete.id));
     } catch (err) {
       console.error("Eroare la ștergerea postării:", err);
@@ -139,9 +145,7 @@ export function PostList({
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem onClick={() => handleEdit(post.id)}>
-                    Editează
-                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEdit(post)}>Editează</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleDeleteClick(post)}
                     className="text-red-600"
@@ -168,6 +172,18 @@ export function PostList({
         confirmButtonText="Șterge"
         cancelButtonText="Anulează"
       />
+
+      {editingPost && (
+        <EditPostModal
+          post={editingPost}
+          isOpen={!!editingPost}
+          onClose={() => setEditingPost(null)}
+          onUpdated={() => {
+            setEditingPost(null);
+            onPostUpdated();  // Apelează funcția de actualizare a listei
+          }}
+        />
+      )}
     </div>
   );
 }

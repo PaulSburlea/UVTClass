@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+
 import useSWR from "swr";
 import { CourseCard } from "./course-card";
 import { Classroom } from "@prisma/client";
