@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-contex";
 
 const tabs = [
-  { label: "Flux", value: "stream" },
+  { label: "Flux", value: "" },
   { label: "Activitate la curs", value: "activity" },
   { label: "Persoane", value: "people" },
 ];

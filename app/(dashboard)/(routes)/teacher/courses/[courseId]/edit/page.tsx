@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { IconBadge } from '@/components/icon-badge';
 import { db } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
-import { Icon, LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { TitleForm } from '../_components/title-form';
 import { SectionForm } from '../_components/section-form';

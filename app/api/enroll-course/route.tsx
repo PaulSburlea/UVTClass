@@ -38,6 +38,7 @@ export async function POST(req: Request) {
       data: {
         classroomId: classroom.id,
         userId,
+        role: "STUDENT",
       },
     });
 

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate } from "swr";
-import { ConfirmModal } from "./confirm-modal";
+import { ConfirmModal } from "../../../../../../../components/confirm-modal";
 
 const bgGradients = [
   "bg-gradient-to-br from-slate-700 to-gray-800",
