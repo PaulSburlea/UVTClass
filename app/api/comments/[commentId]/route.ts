@@ -18,10 +18,13 @@ async function deleteCommentRecursively(id: string) {
 }
 
 // DELETE: șterge un comentariu (cu toţi descendenții)
-export async function DELETE(
-  req: Request,
-  { params: { commentId } }: { params: { commentId: string } }
-) {
+export async function DELETE(req: Request, props: { params: Promise<{ commentId: string }> }) {
+  const params = await props.params;
+
+  const {
+    commentId
+  } = params;
+
   try {
     const user = await currentUser();
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
@@ -68,7 +71,7 @@ export async function DELETE(
 // PATCH: editează un comentariu
 export async function PATCH(
   req: Request,
-  context: { params: { commentId: string } }
+  context: { params: Promise<{ commentId: string }> }
 ) {
   try {
     const user = await currentUser();
@@ -81,7 +84,7 @@ export async function PATCH(
 
     // Găsim comentariul existent în baza de date
     const existing = await db.comment.findUnique({
-      where: { id: context.params.commentId },
+      where: { id: (await context.params).commentId },
     });
 
     if (!existing || existing.authorId !== user.id) {
@@ -90,7 +93,7 @@ export async function PATCH(
 
     // Actualizăm comentariul și adăugăm data ultimei editări
     const updated = await db.comment.update({
-      where: { id: context.params.commentId },
+      where: { id: (await context.params).commentId },
       data: {
         content,
         editedAt: new Date(),  // Adăugăm data editării

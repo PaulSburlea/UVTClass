@@ -1,10 +1,13 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  req: Request,
-  { params: { id } }: { params: { id: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+
+  const {
+    id
+  } = params;
+
   try {
     // Apelează funcția pentru a obține instanța de client
     const client = await clerkClient();

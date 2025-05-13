@@ -1,3 +1,4 @@
+// app/(dashboard)/_components/course-sub-navbar.tsx
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -6,28 +7,37 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-contex";
 
 const tabs = [
-  { label: "Flux", value: "" },
-  { label: "Activitate la curs", value: "activity" },
-  { label: "Persoane", value: "people" },
+  { label: "Flux",       value: ""         },
+  { label: "Activitate", value: "activity" },
+  { label: "Persoane",   value: "people"   },
 ];
 
-export const CourseSubNavbar = ({ courseId }: { courseId: string }) => {
+interface CourseSubNavbarProps {
+  courseId: string;
+}
+
+export const CourseSubNavbar = ({ courseId }: CourseSubNavbarProps) => {
   const pathname = usePathname();
   const { isSidebarOpen, isSidebarHovered } = useSidebar();
-
   const sidebarWidth = isSidebarOpen || isSidebarHovered ? 300 : 76;
+
+  // Detectăm automat rolul din URL
+  const base = pathname.startsWith("/student/") ? "/student" : "/teacher";
 
   return (
     <div
       className="bg-white border-b h-[50px] fixed top-[66px] z-40 flex items-center px-6 transition-all duration-200"
       style={{ left: sidebarWidth, right: 0 }}
     >
-      {tabs.map(tab => {
-        const isActive = pathname.includes(`/teacher/courses/${courseId}/${tab.value}`);
+      {tabs.map((tab) => {
+        const suffix = tab.value ? `/${tab.value}` : "";
+        const href   = `${base}/courses/${courseId}${suffix}`;
+        const isActive = pathname === href;
+
         return (
           <Link
             key={tab.value}
-            href={`/teacher/courses/${courseId}/${tab.value}`}
+            href={href}
             className={cn(
               "mr-6 text-sm font-medium pb-1 border-b-2 transition-colors",
               isActive
