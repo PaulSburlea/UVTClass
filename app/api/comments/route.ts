@@ -32,32 +32,34 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const postId = searchParams.get("postId");
+  const { searchParams } = new URL(req.url);
+  const postId = searchParams.get("postId");
+  const parentCommentId = searchParams.get("parentCommentId");
 
-    if (!postId) {
-      return new NextResponse("Missing postId", { status: 400 });
-    }
-
-    const comments = await db.comment.findMany({
-      where: { postId, parentCommentId: null },
-      include: {
-        replies: {
-          include: {
-            replies: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return NextResponse.json(comments);
-  } catch (error) {
-    console.error("[COMMENT_GET]", error);
-    return new NextResponse("Internal error", { status: 500 });
+  if (!postId) {
+    return new NextResponse("Missing postId", { status: 400 });
   }
-}
 
+  const where: any = { postId };
+  if (parentCommentId) {
+    where.parentCommentId = parentCommentId;
+  } else {
+    where.parentCommentId = null;
+  }
+
+  const comments = await db.comment.findMany({
+    where,
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      editedAt: true,
+      authorId: true,
+      authorName: true,
+      authorAvatar: true,
+    },
+  });
+
+  return NextResponse.json(comments);
+}

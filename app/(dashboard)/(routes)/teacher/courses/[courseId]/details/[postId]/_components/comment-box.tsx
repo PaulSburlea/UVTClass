@@ -4,27 +4,53 @@ import { useRef, useState, useEffect, useTransition } from "react";
 import Image from "next/image";
 import { SendHorizontal } from "lucide-react";
 
+// Tipul complet Comment — poate fi mutat într-un fișier separat de tipuri
+export interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorId?: string;
+  authorName?: string;
+  authorAvatar?: string;
+  replies?: Comment[];
+}
+
 export function CommentBox({
   avatarUrl,
   postId,
   onCommentAdded,
   commentToEdit,
   onEditDone,
+  onCommentUpdated,
+  replyTo,
+  onCancelReply,
 }: {
   avatarUrl: string;
   postId: string;
   onCommentAdded?: () => void;
-  commentToEdit?: { id: string; content: string };
+  commentToEdit?: Comment | null;
   onEditDone?: () => void;
+  onCommentUpdated?: (updatedComment: Comment) => void;
+  replyTo?: { id: string; authorName: string; authorEmail: string };
+  onCancelReply?: () => void;
+
 }) {
-  const [value, setValue] = useState(commentToEdit?.content || "");
+  const [value, setValue] = useState("");
   const [isPending, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Setează valoarea în textarea când se schimbă commentToEdit sau replyTo
   useEffect(() => {
-    setValue(commentToEdit?.content || "");
-  }, [commentToEdit]);
+    if (replyTo) {
+      setValue(`${replyTo.authorEmail} `);
+    } else if (commentToEdit) {
+      setValue(commentToEdit.content);
+    } else {
+      setValue("");
+    }
+  }, [replyTo, commentToEdit]);
 
+  // Ajustează înălțimea textarea-ului
   useEffect(() => {
     const ta = textareaRef.current;
     if (ta) {
@@ -43,17 +69,28 @@ export function CommentBox({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content: value }),
         });
+
+        onCommentUpdated?.({
+          ...commentToEdit,
+          content: value,
+        });
+
         onEditDone?.();
       } else {
         await fetch("/api/comments", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ postId, content: value }),
+          body: JSON.stringify({
+            postId,
+            content: value,
+            parentCommentId: replyTo?.id || null,
+          }),
         });
         onCommentAdded?.();
       }
 
       setValue("");
+      onCancelReply?.();
     } catch (error) {
       console.error("Failed to submit comment:", error);
     }
@@ -61,7 +98,6 @@ export function CommentBox({
 
   return (
     <div className="flex items-start gap-3 mt-4">
-      {/* Avatar */}
       <Image
         src={avatarUrl}
         alt="Avatar"
@@ -69,33 +105,32 @@ export function CommentBox({
         height={32}
         className="rounded-full object-cover"
       />
-
-      {/* Textarea și buton */}
       <div className="flex flex-1 items-start gap-2">
-        {/* Textarea */}
         <div className="flex-1">
-          <textarea
-            ref={textareaRef}
-            placeholder="Adaugă un comentariu..."
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            rows={1}
-            className="w-full resize-none overflow-hidden border border-gray-300 rounded-2xl px-4 py-2 text-sm focus:outline-none"
-          />
-          {commentToEdit && (
-            <div className="flex justify-between text-xs mt-1 text-blue-600">
-              <span className="italic">Editare comentariu...</span>
+          {replyTo && (
+            <div className="bg-blue-100 text-blue-800 px-3 py-1 text-sm rounded-t-md mb-1 flex justify-between items-center">
+              <span>
+                Răspunzi lui <strong>{replyTo.authorEmail}</strong>
+              </span>
               <button
-                onClick={onEditDone}
-                className="underline text-blue-600 hover:text-blue-800"
+                onClick={onCancelReply}
+                className="text-xs text-blue-600 underline hover:text-blue-800"
               >
                 Anulează
               </button>
             </div>
           )}
+          <textarea
+            ref={textareaRef}
+            placeholder={
+              commentToEdit ? "Editează comentariul..." : "Adaugă un comentariu..."
+            }
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            rows={1}
+            className="w-full resize-none overflow-hidden border border-gray-300 rounded-2xl px-4 py-2 text-sm focus:outline-none"
+          />
         </div>
-
-        {/* Butonul în afara chenarului */}
         <button
           type="button"
           onClick={() => startTransition(handleSubmit)}
