@@ -2,25 +2,27 @@
 
 import { useState } from "react";
 import CourseCard from "./course-info";
-import { PostForm } from "./post-form";
-import { PostList } from "./post-list";
+import { PostForm } from "../../../posts/_components/post-form";
+import { PostList } from "../../../posts/_components/post-list";
 
 interface ClientCoursePageProps {
   courseId: string;
   userId: string;
   course: any;
+  userRole: "TEACHER" | "STUDENT"; 
 }
 
 export const ClientCoursePage = ({
   courseId,
   userId,
   course,
+  userRole,
 }: ClientCoursePageProps) => {
   const [refetchKey, setRefetchKey] = useState(0);
 
   // Handler pentru actualizarea postării
   const handlePostUpdated = () => {
-    setRefetchKey((prev) => prev + 1);  // Actualizează refetchKey când o postare este editată
+    setRefetchKey((prev) => prev + 1);
   };
 
   return (
@@ -30,7 +32,8 @@ export const ClientCoursePage = ({
       <PostList 
         courseId={courseId} 
         refetchKey={refetchKey} 
-        onPostUpdated={handlePostUpdated}  // Transmite funcția onPostUpdated
+        onPostUpdated={handlePostUpdated}
+        userRole={userRole}
       />
     </div>
   );

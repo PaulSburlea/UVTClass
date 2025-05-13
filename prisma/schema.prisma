@@ -1,6 +1,6 @@
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
 
@@ -28,6 +28,7 @@ model UserClassroom {
   id           String   @id @default(uuid())
   classroomId  String
   userId       String
+  role         UserRole
 
   classroom    Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
 
@@ -36,20 +37,29 @@ model UserClassroom {
   @@unique([classroomId, userId])
 }
 
+enum UserRole {
+  TEACHER
+  STUDENT
+}
+
+
 model Post {
   id          String     @id @default(uuid())
   authorId    String     
   authorName  String?
   classroomId String
-  title       String     // <-- adăugat aici
-  content     String     @db.Text
+  title       String     
+  content     String?     @db.Text
 
   classroom   Classroom  @relation(fields: [classroomId], references: [id], onDelete: Cascade)
 
-  @@index([classroomId])
   materials   Material[]
+  comments    Comment[]  @relation(name: "PostComments")
 
   createdAt   DateTime   @default(now())
+  editedAt    DateTime?  
+
+  @@index([classroomId])
 }
 
 model Material {
@@ -63,9 +73,30 @@ model Material {
 
   post      Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@index([postId])
-
   uploadedAt DateTime     @default(now())
+
+  @@index([postId])
+}
+
+model Comment {
+  id              String     @id @default(uuid())
+  postId          String
+  authorId        String
+  authorName      String
+  authorAvatar    String?
+  content         String     @db.Text
+  parentCommentId String?
+
+  post            Post       @relation(name: "PostComments", fields: [postId], references: [id], onDelete: Cascade)
+
+  parentComment   Comment?   @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies         Comment[]  @relation("CommentReplies")
+
+  createdAt       DateTime   @default(now())
+  editedAt        DateTime?  @updatedAt
+
+  @@index([postId])
+  @@index([parentCommentId])
 }
 
 enum MaterialType {

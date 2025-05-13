@@ -23,7 +23,7 @@ const CourseIdPage = async (props: CourseIdPageProps) => {
   return (
     <>
       <CourseSubNavbar courseId={params.courseId} />
-      <ClientCoursePage courseId={params.courseId} userId={userId} course={course} />
+      <ClientCoursePage courseId={params.courseId} userId={userId} course={course} userRole="TEACHER" />
     </>
   );
 };
