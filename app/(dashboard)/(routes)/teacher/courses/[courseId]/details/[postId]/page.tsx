@@ -10,11 +10,12 @@ interface Props {
   params: {
     courseId: string;
     postId: string;
+    postAuthorId: string;
   };
 }
 
 export default async function PostDetailsPage({ params }: Props) {
-  const { courseId, postId } = await params;
+  const { courseId, postId, postAuthorId } = await params;
   const user = await currentUser();
   const avatarUrl = user?.imageUrl ?? "/default-avatar.png";
 
@@ -91,7 +92,7 @@ export default async function PostDetailsPage({ params }: Props) {
       <PostMaterials post={{ ...post, content: post.content ?? undefined }} materials={post.materials} />
 
       {/* Lista de comentarii */}
-      <CommentSection avatarUrl={avatarUrl} postId={postId} />
+      <CommentSection avatarUrl={avatarUrl} postId={postId} postAuthorId={postAuthorId} classroomId={courseId}/>
     </div>
   );
 }

@@ -32,7 +32,10 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
 }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const isActive = pathname === href;
+  const isActive =
+    pathname === href ||
+    (pathname.startsWith("/teacher/courses/") && href.startsWith("/teacher/courses/")) ||
+    (pathname.startsWith("/student/courses/") && href.startsWith("/student/courses/"));
 
   const handleClick = () => {
     if (onClick) {

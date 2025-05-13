@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { CommentBox } from "./comment-box";
 import { CommentList } from "./comment-list";
+import { fetchCommentsTree } from "@/lib/fetchCommentsTrees";
+import { set } from "date-fns";
 
 interface Comment {
   id: string;
@@ -11,34 +13,37 @@ interface Comment {
   authorId?: string;
   authorName?: string;
   authorAvatar?: string;
-  replies: Comment[];
+  replies?: Comment[];
+
 }
 
 export function CommentSection({
   postId,
   avatarUrl,
+  postAuthorId,
+  classroomId,
 }: {
   postId: string;
   avatarUrl: string;
+  postAuthorId: string;
+  classroomId: string;
+  
 }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentToEdit, setCommentToEdit] = useState<Comment | null>(null);
 
-
-  const fetchComments = async () => {
-    try {
-      const res = await fetch(`/api/comments?postId=${postId}`);
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = (await res.json()) as Comment[];
-      setComments(data);
-    } catch (err) {
-      console.error("Error fetching comments:", err);
-    }
-  };
-
   useEffect(() => {
-    fetchComments();
+    fetchCommentsTree(postId)
+      .then(setComments)
+      .catch((err) => console.error("Error fetching comment tree:", err));
   }, [postId]);
+
+  const reloadComments = () => {
+  fetchCommentsTree(postId)
+    .then(setComments)
+    .catch(console.error);
+};
+
 
   return (
     <div className="mt-8 border-t pt-4">
@@ -49,22 +54,14 @@ export function CommentSection({
       <div className="space-y-4 mb-4">
         <CommentList
           comments={comments}
-          onCommentsChange={fetchComments}
+          onCommentsChange={reloadComments}
           setCommentToEdit={setCommentToEdit}
           commentToEdit={commentToEdit}
+          postId={postId}
+          postAuthorId={postAuthorId}
+          classroomId={classroomId}
         />
       </div>
-
-      <CommentBox
-        avatarUrl={avatarUrl}
-        postId={postId}
-        commentToEdit={commentToEdit || undefined}
-        onEditDone={() => {
-          setCommentToEdit(null);
-          fetchComments();
-        }}
-        onCommentAdded={fetchComments}
-      />
     </div>
   );
 }

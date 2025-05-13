@@ -34,9 +34,9 @@ async function requireTeacher(postId: string, userId: string) {
 // —————————————— DELETE ——————————————
 export async function DELETE(
   req: Request,
-  context: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
-  const { postId } = context.params;
+  const { postId } = (await context.params);
   const { userId } = await auth();
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
@@ -57,9 +57,9 @@ export async function DELETE(
 // —————————————— PUT ——————————————
 export async function PUT(
   req: Request,
-  context: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
-  const { postId } = context.params;
+  const { postId } = (await context.params);
   const { userId } = await auth();
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
@@ -122,9 +122,9 @@ export async function PUT(
 // —————————————— GET ——————————————
 export async function GET(
   req: Request,
-  context: { params: { postId: string } }
+  context: { params: Promise<{ postId: string }> }
 ) {
-  const { postId } = context.params;
+  const { postId } = (await context.params);
   const { userId } = await auth();
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 

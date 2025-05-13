@@ -1,12 +1,13 @@
 "use client";
 
-import { format, isToday, set } from "date-fns";
-import { ro } from "date-fns/locale";
-import Image from "next/image";
-import { CornerUpRight, MoreVertical } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
+import Image from "next/image";
+import { CornerUpRight, MoreVertical } from "lucide-react";
+import { format, isToday } from "date-fns";
+import { ro } from "date-fns/locale";
 import { toast } from "react-hot-toast";
+import { useEffect } from "react";
 
 import {
   DropdownMenu,
@@ -14,9 +15,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmModal } from "@/components/confirm-modal";
+import { CommentBox } from "./comment-box";
+import { useIsTeacher } from "@/lib/use-is-teacher";
 
-import { ConfirmModal } from "../../../../../../../../../components/confirm-modal";
-
+// Format dată românește
 function formatDateDisplay(date: Date) {
   return isToday(date)
     ? format(date, "HH:mm", { locale: ro })
@@ -31,159 +34,207 @@ export interface Comment {
   authorId?: string;
   authorName?: string;
   authorAvatar?: string;
-  replies: Comment[];
+  replies?: Comment[];
 }
+
+type ReplyTarget = {
+  id: string;
+  authorName: string;
+  authorEmail: string;
+};
 
 interface Props {
   comments: Comment[];
+  postId: string;
+  postAuthorId: string;
+  classroomId: string;
   onCommentsChange: () => void;
-  setCommentToEdit: (comment: Comment) => void;
+  setCommentToEdit: (c: Comment | null) => void;
   commentToEdit: Comment | null;
 }
 
-export function CommentList({ comments, onCommentsChange, setCommentToEdit, commentToEdit }: Props) {
+export function CommentList({
+  comments,
+  postId,
+  postAuthorId,
+  classroomId,
+  onCommentsChange,
+  setCommentToEdit,
+  commentToEdit,
+}: Props) {
   const { user } = useUser();
   const userId = user?.id;
-
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const isTeacher = useIsTeacher(classroomId);
+  const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
   const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [localComments, setLocalComments] = useState<Comment[]>(comments);
 
-  const handleDeleteComment = async () => {
+  useEffect(() => {
+  setLocalComments(comments);
+}, [comments]);
+
+  const handleDelete = async () => {
     if (!commentToDelete) return;
 
-    try {
-      const res = await fetch(`/api/comments/${commentToDelete.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete");
-      toast.success("Comentariul a fost șters!");
-      setIsConfirmOpen(false);
-      setCommentToDelete(null);
+    const res = await fetch(`/api/comments/${commentToDelete.id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      toast.error("Nu ai permisiunea să ștergi acest comentariu");
+    } else {
+      toast.success("Comentariul a fost șters");
       onCommentsChange();
-    } catch (err) {
-      console.error("Eroare la ștergere:", err);
-      toast.error("A apărut o eroare.");
+    }
+
+    setCommentToDelete(null);
+    setIsConfirmOpen(false);
+  };
+
+  const handleCommentUpdated = (updatedComment: Comment) => {
+  const updateComments = (comments: Comment[]): Comment[] => {
+    return comments.map(c => {
+      if (c.id === updatedComment.id) {
+        return { ...c, ...updatedComment };
+      } else if (c.replies) {
+        return { ...c, replies: updateComments(c.replies) };
+      }
+      return c;
+    });
+  };
+
+  setLocalComments(prev => updateComments(prev));
+  setCommentToEdit(null);
+};
+
+
+  const handleReplyClick = async (c: Comment) => {
+    if (!c.authorId) return;
+    try {
+      const res = await fetch(`/api/users/${c.authorId}`);
+      if (!res.ok) throw new Error();
+      const { email } = await res.json();
+
+      setReplyTarget({
+        id: c.id,
+        authorName: c.authorName || "Anonim",
+        authorEmail: email,
+      });
+    } catch {
+      toast.error("Nu am putut prelua emailul userului");
     }
   };
 
-  if (!comments.length)
-    return <p className="text-gray-500">Fără comentarii încă.</p>;
+  const renderComment = (c: Comment, depth = 0) => {
+    const isEditing = commentToEdit?.id === c.id;
+    const canEdit = c.authorId === userId;
+    const canDelete = canEdit || userId === postAuthorId || isTeacher;
 
-  return (
-    <div className="space-y-4">
-{comments.map((comment) => {
-  const isBeingEdited = commentToEdit?.id === comment.id;
-
-  return (
-    <div
-      key={comment.id}
-      className={`border p-3 rounded-md relative transition-colors ${
-        isBeingEdited ? "border-blue-500 bg-blue-50" : ""
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <Image
-          src={comment.authorAvatar || "/default-avatar.png"}
-          alt="avatar"
-          width={32}
-          height={32}
-          className="rounded-full object-cover"
-        />
-
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-semibold">
-                {comment.authorName || "Anonim"}
-              </p>
-              <p className="text-xs text-gray-600">
-                {formatDateDisplay(new Date(comment.createdAt))}
-                {comment.editedAt && comment.editedAt !== comment.createdAt && (
-                  <span className="text-gray-500 text-xs ml-2">
-                    (Editat la {formatDateDisplay(new Date(comment.editedAt))})
-                  </span>
-                )}
-              </p>
-            </div>
-
-            {comment.authorId === userId ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    title="Acțiuni"
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <MoreVertical size={18} />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setCommentToEdit(comment);
-                    }}
-                  >
-                    Editează
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setCommentToDelete(comment);
-                      setIsConfirmOpen(true);
-                    }}
-                    className="text-red-600"
-                  >
-                    Șterge
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <button
-                title="Răspunde"
-                className="text-gray-400 hover:text-blue-500"
-              >
-                <CornerUpRight size={18} />
-              </button>
-            )}
-          </div>
-
-          <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">
-            {comment.content}
-          </p>
-        </div>
-      </div>
-
-      {/* Replies, dacă există */}
-      {comment.replies.length > 0 && (
-        <div className="ml-8 mt-3 space-y-2 border-l pl-4">
-          {comment.replies.map((reply) => (
-            <div key={reply.id} className="flex gap-3">
-              <Image
-                src={reply.authorAvatar || "/default-avatar.png"}
-                alt="avatar"
-                width={24}
-                height={24}
-                className="rounded-full object-cover"
-              />
-              <div>
+    return (
+      <div key={c.id} className={depth > 0 ? "ml-8" : ""}>
+        <div className={`border p-3 rounded-md mb-2 ${isEditing ? "border-blue-500 bg-blue-50" : ""}`}>
+          <div className="flex items-start gap-3">
+            <Image
+              src={c.authorAvatar ?? "/default-avatar.png"}
+              alt="avatar"
+              width={32}
+              height={32}
+              className="rounded-full"
+              unoptimized
+            />
+            <div className="flex-1">
+              <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold">
-                    {reply.authorName || "Anonim"}
-                  </p>
-                  <span className="text-xs text-gray-400">
-                    {formatDateDisplay(new Date(reply.createdAt))}
-                  </span>
+                  <p className="font-semibold text-sm">{c.authorName ?? "Anonim"}</p>
+                  <div className="flex items-center gap-2 flex-wrap text-xs text-gray-600">
+                    <span>{formatDateDisplay(new Date(c.createdAt))}</span>
+                    {c.editedAt && c.editedAt !== c.createdAt && (
+                      <span className="text-gray-500">
+                        (Editat la {formatDateDisplay(new Date(c.editedAt))})
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {reply.content}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-})}
 
+                <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="text-gray-400 hover:text-gray-600">
+                        <MoreVertical size={18} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      {canEdit && (
+                        <DropdownMenuItem onClick={() => setCommentToEdit(c)}>
+                          Editează
+                        </DropdownMenuItem>
+                      )}
+                      {canDelete && (
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setCommentToDelete(c);
+                            setIsConfirmOpen(true);
+                          }}
+                          className="text-red-600"
+                        >
+                          Șterge
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => handleReplyClick(c)}>
+                        Răspunde
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                </div>
+              </div>
+
+              {!isEditing ? (
+                <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">{c.content}</p>
+              ) : (
+                <button
+                  onClick={() => setCommentToEdit(null)}
+                  className="text-xs text-blue-600 underline mt-2 hover:text-blue-800"
+                >
+                  Anulează editarea
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {replyTarget?.id === c.id && (
+          <CommentBox
+            avatarUrl={user?.imageUrl ?? "/default-avatar.png"}
+            postId={postId}
+            replyTo={replyTarget}
+            onCommentAdded={() => {
+              setReplyTarget(null);
+              onCommentsChange();
+            }}
+            onCancelReply={() => setReplyTarget(null)}
+          />
+        )}
+
+        {Array.isArray(c.replies) && c.replies.map((r) => renderComment(r, depth + 1))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {localComments.map((c) => renderComment(c))}
+
+      {!replyTarget && (
+        <CommentBox
+          avatarUrl={user?.imageUrl ?? "/default-avatar.png"}
+          postId={postId}
+          commentToEdit={commentToEdit}
+          onCommentAdded={onCommentsChange}
+          onCommentUpdated={handleCommentUpdated}
+        />
+      )}
 
       <ConfirmModal
         isOpen={isConfirmOpen}
@@ -191,7 +242,7 @@ export function CommentList({ comments, onCommentsChange, setCommentToEdit, comm
           setIsConfirmOpen(false);
           setCommentToDelete(null);
         }}
-        onConfirm={handleDeleteComment}
+        onConfirm={handleDelete}
         title="Șterge comentariul"
         description="Ești sigur că vrei să ștergi acest comentariu?"
         confirmButtonText="Șterge"
