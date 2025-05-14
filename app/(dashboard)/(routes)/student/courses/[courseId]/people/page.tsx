@@ -14,10 +14,11 @@ interface Person {
 }
 
 interface PageProps {
-  params: { courseId: string };
+  params: Promise<{ courseId: string }>;
 }
 
-export default async function StudentCoursePeoplePage({ params }: PageProps) {
+export default async function StudentCoursePeoplePage(props: PageProps) {
+  const params = await props.params;
   const { userId } = await auth();
   if (!userId) return redirect("/");
 

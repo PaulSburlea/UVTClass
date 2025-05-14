@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
-import { LogOut, Plus } from "lucide-react";
-import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export const NavbarRoutes = () => {
     const pathname = usePathname();
@@ -15,7 +14,6 @@ export const NavbarRoutes = () => {
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     const isTeacherPage = pathname?.startsWith("/teacher");
-    const isPlayerPage = pathname?.includes("/chapter");
 
     // Handle click outside
     useEffect(() => {
@@ -43,22 +41,6 @@ export const NavbarRoutes = () => {
 
     return (
         <div className="flex gap-x-3 ml-auto">
-            {/* Buton de navigare între moduri */}
-            {isTeacherPage || isPlayerPage ? (
-                <Link href="/">
-                    <Button size="sm" variant="ghost">
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Ieși din modul profesor
-                    </Button>
-                </Link>
-            ) : (
-                <Link href="/teacher">
-                    <Button size="sm" variant="ghost">
-                        Intră în modul profesor
-                    </Button>
-                </Link>
-            )}
-
             {/* Dropdown cu acțiuni */}
             <div className="relative" ref={dropdownRef}>
                 <Button
