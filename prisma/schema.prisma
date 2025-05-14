@@ -99,6 +99,42 @@ model Comment {
   @@index([parentCommentId])
 }
 
+model Admin {
+  userId    String   @id
+  createdAt DateTime @default(now())
+}
+
+model Teacher {
+  userId    String   @id
+  createdAt DateTime @default(now())
+}
+
+enum GradeCategory {
+  HOMEWORK
+  QUIZ
+  PROJECT
+  EXAM
+  OTHER
+}
+
+model Grade {
+  id           String         @id @default(uuid())
+  courseId     String
+  studentId    String
+  category     GradeCategory
+  title        String 
+  date         DateTime 
+  score        Float
+  weight       Float     
+  position     Int    
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([courseId])
+  @@index([studentId])
+}
+
+
 enum MaterialType {
   FILE
   YOUTUBE

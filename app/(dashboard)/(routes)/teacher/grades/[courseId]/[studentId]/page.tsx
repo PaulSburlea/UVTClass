@@ -1,0 +1,284 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { GradeCategory } from "@prisma/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "react-hot-toast";
+
+interface GradeEntry {
+  id?: string;
+  category: GradeCategory;
+  title: string;
+  date: string;
+  score: number | string;
+  weight: number | string;
+  position?: number;
+}
+
+type GradePayload = {
+  id?: string;
+  category: GradeCategory;
+  title: string;
+  date: string;
+  score: number;
+  weight: number;
+  position: number;
+};
+
+const categoryLabels: Record<GradeCategory, string> = {
+  EXAM: "Examen",
+  QUIZ: "Test",
+  HOMEWORK: "Temă",
+  PROJECT: "Proiect",
+  OTHER: "Altceva",
+};
+
+export default function StudentGradePage() {
+  const router = useRouter();
+  const params = useParams();
+  const courseId = params?.courseId as string;
+  const studentId = params?.studentId as string;
+
+  const categories = Object.values(GradeCategory);
+  const [entries, setEntries] = useState<GradeEntry[]>([]);
+  const [invalidFields, setInvalidFields] = useState<Record<number, (keyof GradeEntry)[]>>({});
+
+  useEffect(() => {
+    if (!courseId || !studentId) return;
+    fetch(`/api/grades?courseId=${courseId}&studentId=${studentId}`)
+      .then((res) => res.json())
+      .then((data: GradeEntry[]) => {
+        setEntries(
+          data.map((g) => ({
+            ...g,
+            date: new Date(g.date).toISOString().slice(0, 10),
+            score: g.score ?? "",
+            weight: g.weight ?? 0,
+            position: g.position,
+          }))
+        );
+      })
+      .catch(() => toast.error("Eroare la încărcarea notelor."));
+  }, [courseId, studentId]);
+
+  const totalWeight = useMemo(
+    () => entries.reduce((sum, e) => sum + (typeof e.weight === "number" ? e.weight : 0), 0),
+    [entries]
+  );
+  const weightedAverage = useMemo(() => {
+    if (totalWeight === 0) return 0;
+    return (
+      entries.reduce(
+        (acc, e) =>
+          acc +
+          (typeof e.score === "number" ? e.score : 0) *
+            (typeof e.weight === "number" ? e.weight : 0),
+        0
+      ) / totalWeight
+    );
+  }, [entries, totalWeight]);
+
+  function addRow() {
+    setEntries((prev) => [
+      ...prev,
+      {
+        category: GradeCategory.OTHER,
+        title: "",
+        date: new Date().toISOString().slice(0, 10),
+        score: "",
+        weight: "",
+      },
+    ]);
+  }
+
+  function removeRow(idx: number) {
+    const entry = entries[idx];
+    if (entry.id) {
+      fetch(`/api/grades?id=${entry.id}`, { method: "DELETE" })
+        .then(() => {
+          toast.success("Notă ștearsă.");
+          setEntries((prev) => prev.filter((_, i) => i !== idx));
+        })
+        .catch(() => toast.error("Eroare la ștergerea notei."));
+    } else {
+      setEntries((prev) => prev.filter((_, i) => i !== idx));
+    }
+  }
+
+  function updateRow(idx: number, field: keyof GradeEntry, value: any) {
+    setEntries((prev) => {
+      const next = [...prev];
+      if (field === "score" || field === "weight") {
+        if (value === "") {
+          (next[idx] as any)[field] = value;
+          return next;
+        }
+        const newValue = parseFloat(value);
+        if (isNaN(newValue)) return prev;
+        if (field === "score" && (newValue < 0 || newValue > 10)) {
+          setTimeout(() => toast.error("Nota trebuie să fie între 0 și 10."), 0);
+          return prev;
+        }
+        if (field === "weight") {
+          const sumExcl = next.reduce(
+            (sum, e, i) => (i === idx ? sum : sum + (typeof e.weight === "number" ? e.weight : 0)),
+            0
+          );
+          if (sumExcl + newValue > 100) {
+            setTimeout(() => toast.error("Ponderea totală nu poate depăși 100%."), 0);
+            return prev;
+          }
+        }
+        (next[idx] as any)[field] = newValue;
+      } else {
+        // aici e castul care îndepărtează eroarea TS
+        (next[idx] as any)[field] = value;
+      }
+      return next;
+    });
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const newInvalid: Record<number, (keyof GradeEntry)[]> = {};
+    entries.forEach((entry, i) => {
+      const empties: (keyof GradeEntry)[] = [];
+      if (!entry.title.trim()) empties.push("title");
+      if (!entry.date.trim()) empties.push("date");
+      if (entry.score === "") empties.push("score");
+      if (entry.weight === "") empties.push("weight");
+      if (empties.length) newInvalid[i] = empties;
+    });
+    if (Object.keys(newInvalid).length) {
+      setInvalidFields(newInvalid);
+      toast.error("Completează toate câmpurile înainte de salvare.");
+      return;
+    }
+    setInvalidFields({});
+
+    const sanitized: GradePayload[] = entries.map((e, idx) => ({
+      id: e.id,
+      category: e.category,
+      title: e.title,
+      date: e.date,
+      score: typeof e.score === "string" ? parseFloat(e.score) : e.score,
+      weight: typeof e.weight === "string" ? parseFloat(e.weight) : e.weight,
+      position: idx,
+    }));
+
+    await fetch("/api/grades", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseId, studentId, grades: sanitized }),
+    });
+
+    router.refresh();
+    toast.success("Note salvate!");
+  }
+
+  return (
+    <Card className="max-w-4xl mx-auto mt-6">
+      <CardHeader>
+        <CardTitle>Notarea studentului</CardTitle>
+        <div className="mt-2 text-lg font-medium text-gray-700">
+          Media ponderată: {weightedAverage.toFixed(2)} / 10
+        </div>
+        <div className="text-sm text-gray-500">Total pondere: {totalWeight}%</div>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <table className="w-full table-auto border-collapse rounded-lg overflow-hidden">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-2 text-left">Categorie</th>
+                <th className="p-2 text-left">Titlu</th>
+                <th className="p-2 text-left">Data</th>
+                <th className="p-2 text-left">Notă</th>
+                <th className="p-2 text-left">Pondere (%)</th>
+                <th className="p-2 text-left">Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((row, i) => (
+                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                  <td className="p-1">
+                    <select
+                      value={row.category}
+                      onChange={(e) => updateRow(i, "category", e.target.value as GradeCategory)}
+                      className="w-full p-1 rounded border border-gray-300"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {categoryLabels[cat]}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="p-1">
+                    <input
+                      type="text"
+                      value={row.title}
+                      onChange={(e) => updateRow(i, "title", e.target.value)}
+                      className={`w-full p-1 rounded border ${
+                        invalidFields[i]?.includes("title") ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
+                      type="date"
+                      value={row.date}
+                      onChange={(e) => updateRow(i, "date", e.target.value)}
+                      className={`w-full p-1 rounded border ${
+                        invalidFields[i]?.includes("date") ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={row.score}
+                      onChange={(e) => updateRow(i, "score", e.target.value)}
+                      className={`w-full p-1 rounded border ${
+                        invalidFields[i]?.includes("score") ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={row.weight}
+                      onChange={(e) => updateRow(i, "weight", e.target.value)}
+                      className={`w-full p-1 rounded border ${
+                        invalidFields[i]?.includes("weight") ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                  </td>
+                  <td className="p-1 text-center">
+                    <button
+                      type="button"
+                      onClick={() => removeRow(i)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Șterge
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="flex justify-between">
+            <Button variant="outline" type="button" onClick={addRow}>
+              + Adaugă evaluare
+            </Button>
+            <Button type="submit">Salvează note</Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
