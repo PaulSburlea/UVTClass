@@ -1,15 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { Material, MaterialType } from "@prisma/client";
 
 interface PostMaterialsProps {
-    post: {
-      content?: string;
-    };
+    post: { content?: string };
     materials: Material[];
-  }
-  
+}
 
 interface PreviewData {
   title: string;
@@ -17,12 +15,9 @@ interface PreviewData {
 }
 
 export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post }) => {
-  // titluri YouTube & previews link
   const [ytTitles, setYtTitles] = useState<Record<string, string>>({});
   const [linkPreviews, setLinkPreviews] = useState<Record<string, PreviewData>>({});
-  // pentru conținut text în modal
   const [textPreviews, setTextPreviews] = useState<Record<string, string>>({});
-  // material selectat în modal
   const [selected, setSelected] = useState<Material | null>(null);
 
   const extractYouTubeId = (url: string) => {
@@ -30,7 +25,6 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
     return m ? m[1] : null;
   };
 
-  // FETCH TITLURI / PREVIEWS
   useEffect(() => {
     materials.forEach((m) => {
       if (m.type === MaterialType.YOUTUBE && m.url) {
@@ -46,7 +40,10 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         fetch(`/api/get-title?url=${encodeURIComponent(m.url)}`)
           .then((r) => r.json())
           .then((data) => {
-            if (data.title) setLinkPreviews((p) => ({ ...p, [m.id]: { title: data.title, image: data.image } }));
+            if (data.title) setLinkPreviews((p) => ({
+              ...p,
+              [m.id]: { title: data.title, image: data.image }
+            }));
           });
       }
       if (m.type === MaterialType.FILE && m.filePath) {
@@ -61,29 +58,30 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
     });
   }, [materials]);
 
-  // thumbnail rendering
   const renderThumb = (m: Material) => {
     const base = "w-24 h-16 object-cover flex-shrink-0";
-
-    // YouTube
     if (m.type === MaterialType.YOUTUBE && m.url) {
       const vid = extractYouTubeId(m.url);
       return vid ? (
-        <img
+        <Image
           src={`https://img.youtube.com/vi/${vid}/hqdefault.jpg`}
+          alt="YouTube thumbnail"
+          width={96}
+          height={64}
           className={base + " rounded-l-xl"}
           onClick={() => setSelected(m)}
           style={{ cursor: "pointer" }}
         />
       ) : null;
     }
-
-    // Link
     if (m.type === MaterialType.LINK) {
       const prev = linkPreviews[m.id];
       return prev?.image ? (
-        <img
+        <Image
           src={prev.image}
+          alt={prev.title}
+          width={96}
+          height={64}
           className={base + " rounded-l-xl"}
           onClick={() => setSelected(m)}
           style={{ cursor: "pointer" }}
@@ -98,14 +96,15 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         </div>
       );
     }
-
-    // File
     if (m.type === MaterialType.FILE && m.filePath) {
       const ext = m.filePath.split(".").pop()?.toLowerCase();
       if (["jpg", "jpeg", "png", "gif"].includes(ext || "")) {
         return (
-          <img
+          <Image
             src={m.filePath}
+            alt="Uploaded image"
+            width={96}
+            height={64}
             className={base + " rounded-l-xl"}
             onClick={() => setSelected(m)}
             style={{ cursor: "pointer" }}
@@ -122,9 +121,8 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
               data={m.filePath}
               type="application/pdf"
               width="96"
-              height="128"  /* suficient pentru prima pagină */
+              height="128"
             >
-              {/* fallback icon dacă object nu e suportat */}
               <div className="w-full h-full bg-red-100 flex items-center justify-center">
                 <span className="text-red-500 font-bold text-sm">PDF</span>
               </div>
@@ -132,9 +130,6 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
           </div>
         );
       }
-      
-      
-      
       if (["txt", "md"].includes(ext || "")) {
         return (
           <div
@@ -155,8 +150,6 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
           />
         );
       }
-      
-      // fallback
       return (
         <div
           className={base + " bg-gray-300 rounded-l-xl flex items-center justify-center"}
@@ -167,8 +160,6 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         </div>
       );
     }
-
-    // Drive fallback
     return (
       <div
         className={base + " bg-gray-200 rounded-l-xl flex items-center justify-center text-2xl"}
@@ -194,9 +185,7 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
     if (m.type === MaterialType.DRIVE)    return "Google Drive";
     return "";
   };
-  
 
-  // render modal conținut
   const renderModalContent = () => {
     if (!selected) return null;
     const { filePath, url, type, id } = selected;
@@ -211,14 +200,20 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         />
       );
     }
-
     if (type === MaterialType.LINK && linkPreviews[id]?.image) {
-      return <img src={linkPreviews[id]!.image!} className="max-h-full mx-auto" />;
+      return (
+        <Image
+          src={linkPreviews[id]!.image!}
+          alt={linkPreviews[id]!.title}
+          width={600}
+          height={400}
+          className="max-h-full mx-auto"
+        />
+      );
     }
     if (type === MaterialType.LINK && url) {
       return <iframe className="w-full h-full" src={url} />;
     }
-
     if (type === MaterialType.FILE && filePath) {
       if (ext === "pdf") {
         return <iframe src={filePath} className="w-full h-full" />;
@@ -231,23 +226,28 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         );
       }
       if (["jpg","jpeg","png","gif"].includes(ext||"")) {
-        return <img src={filePath} className="max-h-full mx-auto" />;
+        return (
+          <Image
+            src={filePath}
+            alt="Uploaded image"
+            width={600}
+            height={400}
+            className="max-h-full mx-auto"
+          />
+        );
       }
-      // DOC/DOCX – browser fallback
       return <iframe src={filePath} className="w-full h-full" />;
     }
-
     return <div>Previzualizare indisponibilă</div>;
   };
 
   return (
     <>
-        {post.content && (
-            <div className="mt-8">
-                <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
-            </div>
-            )}
-
+      {post.content && (
+        <div className="mt-8">
+          <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
+        </div>
+      )}
       <div className="mt-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {materials.map((m) => (
@@ -277,19 +277,15 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
           ))}
         </div>
       </div>
-
-      {/* Modal */}
       {selected && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-11/12 md:w-3/4 lg:w-1/2 h-3/4 relative flex flex-col">
-            {/* Close */}
             <button
               onClick={() => setSelected(null)}
               className="absolute top-2 left-2 bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center"
             >
               &times;
             </button>
-            {/* Download */}
             <a
               href={selected.type === MaterialType.FILE ? selected.filePath! : selected.url!}
               download
@@ -297,7 +293,6 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
             >
               Descarcă
             </a>
-            {/* Content */}
             <div className="flex-1 overflow-auto p-4">{renderModalContent()}</div>
           </div>
         </div>
