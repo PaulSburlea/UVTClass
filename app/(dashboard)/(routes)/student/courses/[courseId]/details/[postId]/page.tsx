@@ -6,14 +6,15 @@ import { CommentSection } from "@/app/(dashboard)/(routes)/teacher/courses/[cour
 import { PostMaterials } from "@/app/(dashboard)/(routes)/teacher/posts/_components/post-materials";
 
 interface Props {
-  params: {
+  params: Promise<{
     courseId: string;
     postId: string;
     postAuthorId: string;
-  };
+  }>;
 }
 
-export default async function StudentPostDetails({ params }: Props) {
+export default async function StudentPostDetails(props: Props) {
+  const params = await props.params;
   const { courseId, postId, postAuthorId } = params;
 
   // 1) Îl folosim pe Clerk pentru a obține avatarul
