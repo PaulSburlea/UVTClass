@@ -1,29 +1,32 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { EmailAddressResource } from "@clerk/types";
 
-export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-
-  const {
-    id
-  } = params;
+export async function GET(
+  _req: Request,
+  props: { params: Promise<{ id: string }> }
+) {
+  const { id } = await props.params;
 
   try {
-    // Apelează funcția pentru a obține instanța de client
+    // Apelezi clerkClient() pentru a obține instanța propriu-zisă
     const client = await clerkClient();
 
-    // Acum ai acces la client.users
+    // Folosești client.users
     const user = await client.users.getUser(id);
 
-    // Extragi email-ul
-    const email = user.emailAddresses.find((e: any) => e.emailAddress)
+    // Narrowing cu tipul EmailAddressResource
+    const email = (user.emailAddresses as EmailAddressResource[])
+      .find((e) => typeof e.emailAddress === "string")
       ?.emailAddress;
+
     if (!email) {
       return new NextResponse("No email", { status: 404 });
     }
+
     return NextResponse.json({ email });
-  } catch (err) {
-    console.error("Clerk getUser error:", err);
+  } catch (_err) {
+    console.error("Clerk getUser error:", _err);
     return new NextResponse("User not found", { status: 404 });
   }
 }

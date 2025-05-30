@@ -3,7 +3,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
 const f = createUploadthing();
-const authFn = (req: Request) => ({ id: "fakeId" }); // pune autentificarea ta
+const authFn = (_req: Request) => ({ id: "fakeId" }); // pune autentificarea ta
 
 export const ourFileRouter = {
   imageUploader: f({ image: { maxFileSize: "1GB", maxFileCount: 3 } })
