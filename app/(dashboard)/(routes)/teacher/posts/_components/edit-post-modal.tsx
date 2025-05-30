@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, FormEvent } from "react";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import {
   Upload,

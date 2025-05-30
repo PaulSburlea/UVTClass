@@ -30,7 +30,6 @@ interface PostActionsProps {
 }
 
 export const PostActions = ({
-  courseId,
   postId,
   postTitle,
   postContent,
