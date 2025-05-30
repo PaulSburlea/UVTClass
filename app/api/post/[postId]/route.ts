@@ -33,7 +33,6 @@ async function requireTeacher(postId: string, userId: string) {
 
 // —————————————— DELETE ——————————————
 export async function DELETE(
-  _req: Request,
   context: { params: Promise<{ postId: string }> }
 ) {
   const { postId } = (await context.params);
@@ -121,7 +120,6 @@ export async function PUT(
 
 // —————————————— GET ——————————————
 export async function GET(
-  _req: Request,
   context: { params: Promise<{ postId: string }> }
 ) {
   const { postId } = (await context.params);

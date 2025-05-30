@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
     const title = data.items?.[0]?.snippet?.title ?? null;
     return NextResponse.json({ title });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ title: null });
   }
 }

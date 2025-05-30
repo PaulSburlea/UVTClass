@@ -3,6 +3,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
 const f = createUploadthing();
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 const authFn = (_req: Request) => ({ id: "fakeId" }); // pune autentificarea ta
 
 export const ourFileRouter = {
