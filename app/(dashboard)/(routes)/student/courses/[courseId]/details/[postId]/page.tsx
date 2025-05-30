@@ -9,12 +9,11 @@ interface Props {
   params: {
     courseId: string;
     postId: string;
-    postAuthorId: string;
   };
 }
 
 export default async function StudentPostDetails({ params }: Props) {
-  const { courseId, postId, postAuthorId } = params;
+  const { courseId, postId } = params;
 
   // 1) Îl folosim pe Clerk pentru a obține avatarul
   const user = await currentUser();
@@ -53,7 +52,7 @@ export default async function StudentPostDetails({ params }: Props) {
     <PostMaterials post={{ ...post, content: post.content ?? undefined }} materials={post.materials} />
 
       {/* Comentarii */}
-      <CommentSection postId={postId} avatarUrl={avatarUrl} postAuthorId={postAuthorId} classroomId={courseId}/>
+      <CommentSection postId={postId} avatarUrl={avatarUrl} postAuthorId={post.authorId} classroomId={courseId}/>
     </div>
   );
 }
