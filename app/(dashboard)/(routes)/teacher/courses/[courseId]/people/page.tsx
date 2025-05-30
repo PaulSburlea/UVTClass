@@ -72,7 +72,7 @@ const CoursePeoplePage = async ({ params }: CoursePeoplePageProps) => {
   return (
     <>
       <CourseSubNavbar courseId={courseId} />
-      <div className="pt-20 px-6">
+      <div className="pt-16 px-6">
         <ClassroomPeople
           teacher={teacher}
           students={students}

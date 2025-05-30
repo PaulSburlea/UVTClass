@@ -43,7 +43,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ courseId: 
       const course = await db.classroom.delete({
         where: {
           id: params.courseId,
-          userId, // doar creatorul poate șterge
+          userId,
         },
       });
   

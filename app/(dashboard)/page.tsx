@@ -17,4 +17,6 @@ export default async function DashboardLanding() {
 
   // 3. student
   return redirect("/student");
+
+  
 }

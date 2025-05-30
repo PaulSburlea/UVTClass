@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-contex";
 
 const tabs = [
-  { label: "Flux",       value: ""         },
-  { label: "Activitate", value: "activity" },
-  { label: "Persoane",   value: "people"   },
+  { label: "Flux",     getHref: (base: string, courseId: string) => `${base}/courses/${courseId}` },
+  { label: "Note",     getHref: (base: string, courseId: string) => `${base}/grades/${courseId}` },
+  { label: "Persoane", getHref: (base: string, courseId: string) => `${base}/courses/${courseId}/people` },
 ];
 
 interface CourseSubNavbarProps {
@@ -30,13 +30,11 @@ export const CourseSubNavbar = ({ courseId }: CourseSubNavbarProps) => {
       style={{ left: sidebarWidth, right: 0 }}
     >
       {tabs.map((tab) => {
-        const suffix = tab.value ? `/${tab.value}` : "";
-        const href   = `${base}/courses/${courseId}${suffix}`;
+        const href = tab.getHref(base, courseId);
         const isActive = pathname === href;
-
         return (
           <Link
-            key={tab.value}
+            key={tab.label}
             href={href}
             className={cn(
               "mr-6 text-sm font-medium pb-1 border-b-2 transition-colors",

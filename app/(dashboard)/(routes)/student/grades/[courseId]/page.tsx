@@ -1,4 +1,4 @@
-// app/student/grades/[courseId]/page.tsx
+// app/(dashboard)/(routes)/student/grades/[courseId]/page.tsx
 
 "use client";
 
@@ -8,6 +8,7 @@ import { useUser } from "@clerk/nextjs";
 import { GradeCategory } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
+import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
 
 interface GradeEntry {
   id?: string;
@@ -41,7 +42,18 @@ const categoryColors: Record<GradeCategory, string> = {
 };
 
 export default function StudentCourseGradesPage() {
-  const { courseId } = useParams();
+  const params = useParams();
+  let courseId = params.courseId;
+
+  // Dacă useParams returnează array, luăm primul element
+  if (Array.isArray(courseId)) {
+    courseId = courseId[0];
+  }
+  // Dacă nu e definit, afișăm mesaj de eroare
+  if (!courseId) {
+    return <p className="text-center mt-8">ID curs invalid.</p>;
+  }
+
   const { user, isLoaded } = useUser();
   const [entries, setEntries] = useState<GradeEntry[]>([]);
   const [course, setCourse] = useState<Classroom | null>(null);
@@ -49,9 +61,11 @@ export default function StudentCourseGradesPage() {
 
   // Fetch classroom details
   useEffect(() => {
-    if (!courseId) return;
     fetch(`/api/classrooms/${courseId}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
       .then((c: Classroom) => setCourse(c))
       .catch(() => toast.error("Eroare la încărcarea detaliilor cursului"));
   }, [courseId]);
@@ -60,8 +74,11 @@ export default function StudentCourseGradesPage() {
   useEffect(() => {
     if (!isLoaded || !user?.id) return;
     fetch(`/api/grades?courseId=${courseId}&studentId=${user.id}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data: GradeEntry[]) =>
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then((data: GradeEntry[]) => {
         setEntries(
           data.map((g) => ({
             ...g,
@@ -69,14 +86,17 @@ export default function StudentCourseGradesPage() {
             score: Number(g.score),
             weight: Number(g.weight),
           }))
-        )
-      )
+        );
+      })
       .catch(() => toast.error("Eroare la încărcarea notelor"));
   }, [isLoaded, user?.id, courseId]);
 
   // Filter entries
   const filtered = useMemo(
-    () => entries.filter((e) => e.title.toLowerCase().includes(search.toLowerCase())),
+    () =>
+      entries.filter((e) =>
+        e.title.toLowerCase().includes(search.toLowerCase())
+      ),
     [search, entries]
   );
 
@@ -88,54 +108,80 @@ export default function StudentCourseGradesPage() {
   const weightedAverage = useMemo(
     () =>
       totalWeight
-        ? filtered.reduce((acc, e) => acc + e.score * e.weight, 0) / totalWeight
+        ? filtered.reduce((acc, e) => acc + e.score * e.weight, 0) /
+          totalWeight
         : 0,
     [filtered, totalWeight]
   );
 
-  if (!course) return <p className="text-center mt-8">Se încarcă...</p>;
+  if (!course) {
+    return <p className="text-center mt-8">Se încarcă...</p>;
+  }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-semibold mb-4">{course.name}</h1>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-        <Input
-          placeholder="Caută evaluare..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 max-w-sm"
-        />
-        <div className="text-right">
-          <div className="text-lg font-medium">Media ponderată: {weightedAverage.toFixed(2)}</div>
-          <div className="text-sm text-gray-500">Total pondere: {totalWeight.toFixed(1)}%</div>
+    <>
+      {/* Navbar-ul de sub-curs */}
+      <CourseSubNavbar courseId={courseId} />
+
+      {/* Conținut cu padding-top pentru a nu fi suprapus */}
+      <div className="max-w-4xl mx-auto pt-[116px] p-6">
+        <h1 className="text-3xl font-semibold mb-4">{course.name}</h1>
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+          <Input
+            placeholder="Caută evaluare..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 max-w-sm"
+          />
+          <div className="text-right">
+            <div className="text-lg font-medium">
+              Media ponderată: {weightedAverage.toFixed(2)}
+            </div>
+            <div className="text-sm text-gray-500">
+              Total pondere: {totalWeight.toFixed(1)}%
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="p-3 text-left">Titlu</th>
+                <th className="p-3 text-left">Data</th>
+                <th className="p-3 text-right">Notă</th>
+                <th className="p-3 text-right">Pondere</th>
+                <th className="p-3 text-left">Categorie</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((e, i) => (
+                <tr
+                  key={e.id ?? i}
+                  className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  <td className="p-3">{e.title}</td>
+                  <td className="p-3">{e.date}</td>
+                  <td className="p-3 text-right font-medium">
+                    {e.score.toFixed(1)}
+                  </td>
+                  <td className="p-3 text-right">
+                    {e.weight.toFixed(1)}%
+                  </td>
+                  <td className="p-3">
+                    <span
+                      className={`px-2 py-1 rounded ${categoryColors[e.category]}`}
+                    >
+                      {categoryLabels[e.category]}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-3 text-left">Titlu</th>
-              <th className="p-3 text-left">Data</th>
-              <th className="p-3 text-right">Notă</th>
-              <th className="p-3 text-right">Pondere</th>
-              <th className="p-3 text-left">Categorie</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((e, i) => (
-              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                <td className="p-3">{e.title}</td>
-                <td className="p-3">{e.date}</td>
-                <td className="p-3 text-right font-medium">{e.score.toFixed(1)}</td>
-                <td className="p-3 text-right">{e.weight.toFixed(1)}%</td>
-                <td className="p-3">
-                  <span className={`px-2 py-1 rounded ${categoryColors[e.category]}`}>{categoryLabels[e.category]}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </>
   );
 }

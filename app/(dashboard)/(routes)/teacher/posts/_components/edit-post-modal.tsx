@@ -145,16 +145,20 @@ export function EditPostModal({
     form.append("title", title.trim());
     form.append("content", content.trim());
     removedIds.forEach((id) => form.append("removedIds", id));
-    filesPreview.forEach((f) => {
-      if (f.__external) {
-        form.append("links", f.__url!);
-        form.append("types", f.__type!);
-      } else {
-        if (f.size > 0) {
-          form.append("files", f);
-        }
-      }
-    });
+filesPreview.forEach((f) => {
+  if (f.__external) {
+    // only send brand‑new externals (those without an __id)
+    if (!f.__id) {
+      form.append("links", f.__url!)
+      form.append("types", f.__type!)
+    }
+  } else {
+    if (f.size > 0) {
+      form.append("files", f)
+    }
+  }
+})
+
     
     setIsUploading(true);
     const res = await fetch(`/api/post/${post.id}`, { method: "PUT", body: form });
