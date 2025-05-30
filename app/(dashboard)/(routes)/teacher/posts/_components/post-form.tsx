@@ -2,6 +2,7 @@
 
 import { useRef, useState, FormEvent } from "react";
 import { toast } from "react-hot-toast";
+import Image from "next/image";
 import {
   PlusCircle,
   MinusCircle,
@@ -88,15 +89,10 @@ export function PostForm({
   onMaterialAdded?: () => void;
 }) {
   const [open, setOpen] = useState(false);
-
-  // modals state
   const [ytModal, setYtModal] = useState(false);
   const [linkModal, setLinkModal] = useState(false);
-
-  // urls for modals
   const [ytUrl, setYtUrl] = useState("");
   const [extUrl, setExtUrl] = useState("");
-
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [filesPreview, setFilesPreview] = useState<PreviewFile[]>([]);
@@ -107,8 +103,7 @@ export function PostForm({
     fileInputRef.current?.click();
   };
 
-  const postExternalMaterial = (url: string, type: ExternalFile['__type']) => {
-    // dacă există deja un fakeFile extern cu aceeași adresă, nu-l adăugăm
+  const postExternalMaterial = (url: string, type: ExternalFile["__type"]) => {
     const already = filesPreview.some(
       (file) => isExternalFile(file) && file.__url === url
     );
@@ -116,12 +111,10 @@ export function PostForm({
       toast.error("Link-ul a fost deja adăugat.");
       return;
     }
-
     const fakeFile = new File([""], url) as ExternalFile;
     fakeFile.__external = true;
     fakeFile.__type = type;
     fakeFile.__url = url;
-
     setFilesPreview((prev) => [...prev, fakeFile]);
   };
 
@@ -136,15 +129,9 @@ export function PostForm({
         const formData = new FormData();
         formData.append("file", file);
         formData.append("courseId", courseId);
-
-        const res = await fetch("/api/post/upload", {
-          method: "POST",
-          body: formData,
-        });
-
+        const res = await fetch("/api/post/upload", { method: "POST", body: formData });
         if (!res.ok) throw new Error(`Eroare la fișierul ${file.name}`);
       }
-
       toast.success("Fișiere încărcate cu succes!");
       onMaterialAdded?.();
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -162,12 +149,10 @@ export function PostForm({
       toast.error("Titlul este obligatoriu.");
       return;
     }
-
     const formData = new FormData();
     formData.append("courseId", courseId);
     formData.append("title", title);
     formData.append("content", text);
-
     filesPreview.forEach((file) => {
       if (isExternalFile(file)) {
         formData.append("links", file.__url);
@@ -176,12 +161,7 @@ export function PostForm({
         formData.append("files", file);
       }
     });
-
-    const response = await fetch("/api/post/create", {
-      method: "POST",
-      body: formData,
-    });
-
+    const response = await fetch("/api/post/create", { method: "POST", body: formData });
     if (response.ok) {
       toast.success("Postarea a fost publicată cu succes!");
       setTitle("");
@@ -209,12 +189,12 @@ export function PostForm({
     setFilesPreview((prev) => prev.filter((file) => file !== fileToRemove));
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-  
+
   return (
     <div className="mt-4 w-full max-w-screen-lg">
       <div
-        className="p-4 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50"
-        onClick={() => setOpen(!open)}
+        className="p-4 border rounded-lg cursor-pointer bg-white hover:bg-gray-50"
+        onClick={() => setOpen((o) => !o)}
       >
         <div className="flex items-center gap-2">
           {open ? <MinusCircle size={20} /> : <PlusCircle size={20} />}
@@ -223,7 +203,7 @@ export function PostForm({
       </div>
 
       {open && (
-        <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-white space-y-4">
+        <div className="mt-4 p-4 border rounded-lg bg-white space-y-4">
           <input
             type="text"
             className="w-full p-2 border rounded"
@@ -233,48 +213,43 @@ export function PostForm({
           />
 
           <textarea
-            className="w-full p-2 border rounded resize-none h-24"
+            className="w-full p-2 border rounded h-24 resize-none"
             placeholder="Scrie un anunț sau descriere..."
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
 
           {filesPreview.length > 0 && (
-            <div className="mt-4 max-h-60 overflow-y-auto">
+            <div className="mt-4 max-h-60 overflow-auto">
               <h3 className="font-semibold mb-2">Preview fișiere:</h3>
               <ul className="space-y-2">
                 {filesPreview.map((file, i) => {
-                  const isExternal = (file as any).__external;
-                  const url = (file as any).__url;
-                  const type = (file as any).__type as string | undefined;
-
                   let thumb: React.ReactNode;
-                  if (isExternal && type === "YOUTUBE") {
+                  if (isExternalFile(file) && file.__type === "YOUTUBE") {
+                    const vid = new URL(file.__url).searchParams.get("v");
                     thumb = (
-                      <div className="w-20 h-12 overflow-hidden rounded">
+                      <div className="w-20 h-12 overflow-hidden rounded cursor-pointer">
                         <iframe
-                          src={`https://www.youtube.com/embed/${new URL(
-                            url
-                          ).searchParams.get("v")}`}
+                          src={`https://www.youtube.com/embed/${vid}`}
                           className="w-full h-full"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         />
                       </div>
                     );
-                  } else if (!isExternal && file.type.startsWith("image")) {
+                  } else if (!isExternalFile(file) && file.type.startsWith("image")) {
                     thumb = (
-                      <img
+                      <Image
                         src={URL.createObjectURL(file)}
                         alt={file.name}
-                        className="w-12 h-12 object-cover rounded"
+                        width={48}
+                        height={48}
+                        className="object-cover rounded cursor-pointer"
                       />
                     );
                   } else {
                     const { icon, bg } = getFileIconAndColor(file.type);
                     thumb = (
-                      <div
-                        className={`${bg} w-12 h-12 rounded flex items-center justify-center`}
-                      >
+                      <div className={`${bg} w-12 h-12 rounded flex items-center justify-center`}>
                         {icon}
                       </div>
                     );
@@ -283,17 +258,12 @@ export function PostForm({
                   const ext = file.name.split(".").pop()?.toUpperCase();
 
                   return (
-                    <li
-                      key={i}
-                      className="flex items-center justify-between border p-2 rounded-lg"
-                    >
+                    <li key={i} className="flex items-center justify-between border p-2 rounded-lg">
                       <div className="flex items-center gap-3">
                         {thumb}
                         <div className="flex flex-col">
                           <span className="text-sm font-medium truncate">{file.name}</span>
-                          {ext && (
-                            <span className="text-xs text-gray-500 uppercase">.{ext}</span>
-                          )}
+                          {ext && <span className="text-xs text-gray-500 uppercase">.{ext}</span>}
                         </div>
                       </div>
                       <button
@@ -310,22 +280,21 @@ export function PostForm({
             </div>
           )}
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex gap-3 flex-wrap">
             <form onSubmit={handleFileUpload} encType="multipart/form-data">
               <input
                 type="file"
-                name="file"
+                multiple
                 ref={fileInputRef}
                 className="hidden"
-                multiple
                 onChange={handleFileChange}
               />
               <button
                 type="button"
                 onClick={handleUploadClick}
                 className="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center hover:bg-gray-100"
-                title="Încarcă fișier"
                 disabled={isUploading}
+                title="Încarcă fișier"
               >
                 <Upload size={18} />
               </button>
@@ -336,13 +305,7 @@ export function PostForm({
               className="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center hover:bg-gray-100"
               onClick={() => setYtModal(true)}
             >
-              <svg
-                role="img"
-                viewBox="0 0 24 24"
-                className="w-[18px] h-[18px] text-red-600"
-              >
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-              </svg>
+              <LinkIcon size={18} />
             </button>
 
             <button
@@ -364,6 +327,7 @@ export function PostForm({
           </div>
         </div>
       )}
+
 
       {/* Modal YouTube */}
       <Dialog open={ytModal} onOpenChange={setYtModal}>

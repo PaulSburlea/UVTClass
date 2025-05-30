@@ -40,26 +40,20 @@ const categoryColors: Record<GradeCategory, string> = {
 };
 
 export default function StudentCourseGradesPage() {
-  // React hooks must be at top level
+  // 1. Hooks must always run
   const params = useParams();
   const { user, isLoaded } = useUser();
   const [entries, setEntries] = useState<GradeEntry[]>([]);
   const [course, setCourse] = useState<Classroom | null>(null);
   const [search, setSearch] = useState("");
 
-  // Derive courseId
-  let courseId = params.courseId;
-  if (Array.isArray(courseId)) {
-    courseId = courseId[0];
-  }
+  // 2. Derive courseId
+  const rawId = params.courseId;
+  const courseId = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  // Early return if invalid courseId
-  if (!courseId) {
-    return <p className="text-center mt-8">ID curs invalid.</p>;
-  }
-
-  // Fetch classroom details
+  // 3. Effects
   useEffect(() => {
+    if (!courseId) return;
     fetch(`/api/classrooms/${courseId}`)
       .then((res) => {
         if (!res.ok) throw new Error();
@@ -69,9 +63,8 @@ export default function StudentCourseGradesPage() {
       .catch(() => toast.error("Eroare la încărcarea detaliilor cursului"));
   }, [courseId]);
 
-  // Fetch grades
   useEffect(() => {
-    if (!isLoaded || !user?.id) return;
+    if (!isLoaded || !user?.id || !courseId) return;
     fetch(`/api/grades?courseId=${courseId}&studentId=${user.id}`)
       .then((res) => {
         if (!res.ok) throw new Error();
@@ -90,7 +83,7 @@ export default function StudentCourseGradesPage() {
       .catch(() => toast.error("Eroare la încărcarea notelor"));
   }, [isLoaded, user?.id, courseId]);
 
-  // Filter entries
+  // 4. Memos
   const filtered = useMemo(
     () =>
       entries.filter((e) =>
@@ -99,11 +92,11 @@ export default function StudentCourseGradesPage() {
     [search, entries]
   );
 
-  // Stats
   const totalWeight = useMemo(
     () => filtered.reduce((sum, e) => sum + e.weight, 0),
     [filtered]
   );
+
   const weightedAverage = useMemo(
     () =>
       totalWeight
@@ -113,16 +106,18 @@ export default function StudentCourseGradesPage() {
     [filtered, totalWeight]
   );
 
+  // 5. Conditional UI after hooks
+  if (!courseId) {
+    return <p className="text-center mt-8">ID curs invalid.</p>;
+  }
   if (!course) {
     return <p className="text-center mt-8">Se încarcă...</p>;
   }
 
+  // 6. Render UI
   return (
     <>
-      {/* Navbar-ul de sub-curs */}
       <CourseSubNavbar courseId={courseId} />
-
-      {/* Conținut cu padding-top pentru a nu fi suprapus */}
       <div className="max-w-4xl mx-auto pt-[116px] p-6">
         <h1 className="text-3xl font-semibold mb-4">{course.name}</h1>
 
@@ -170,8 +165,7 @@ export default function StudentCourseGradesPage() {
                   </td>
                   <td className="p-3">
                     <span
-                      className={`px-2 py-1 rounded ${categoryColors[e.category]}`} 
-                    >
+                      className={`px-2 py-1 rounded ${categoryColors[e.category]}`}>
                       {categoryLabels[e.category]}
                     </span>
                   </td>
