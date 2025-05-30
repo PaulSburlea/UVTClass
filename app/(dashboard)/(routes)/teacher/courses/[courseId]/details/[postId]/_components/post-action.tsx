@@ -60,7 +60,7 @@ export const PostActions = ({
       } else {
         toast.error("Eroare la ștergerea postării.");
       }
-    } catch (error) {
+    } catch {
       toast.error("Eroare la rețea.");
     } finally {
       setIsConfirmOpen(false);

@@ -111,37 +111,50 @@ export default function StudentGradePage() {
     }
   }
 
-  function updateRow(idx: number, field: keyof GradeEntry, value: any) {
-    setEntries((prev) => {
-      const next = [...prev];
-      if (field === "score" || field === "weight") {
-        if (value === "") {
-          (next[idx] as any)[field] = value;
-          return next;
-        }
-        const newValue = parseFloat(value);
-        if (isNaN(newValue)) return prev;
-        if (field === "score" && (newValue < 0 || newValue > 10)) {
-          setTimeout(() => toast.error("Nota trebuie să fie între 0 și 10."), 0);
+function updateRow(
+  idx: number,
+  field: keyof GradeEntry,
+  value: string | number
+) {
+  setEntries((prev) => {
+    const next = [...prev];
+
+    if (field === "score" || field === "weight") {
+      if (value === "") {
+        (next[idx] as GradeEntry)[field] = value;
+        return next;
+      }
+
+      const newValue = typeof value === "string" ? parseFloat(value) : value;
+
+      if (isNaN(newValue)) return prev;
+
+      if (field === "score" && (newValue < 0 || newValue > 10)) {
+        setTimeout(() => toast.error("Nota trebuie să fie între 0 și 10."), 0);
+        return prev;
+      }
+
+      if (field === "weight") {
+        const sumExcl = next.reduce((sum, e, i) => {
+          if (i === idx) return sum;
+          return sum + (typeof e.weight === "number" ? e.weight : 0);
+        }, 0);
+
+        if (sumExcl + newValue > 100) {
+          setTimeout(() => toast.error("Ponderea totală nu poate depăși 100%."), 0);
           return prev;
         }
-        if (field === "weight") {
-          const sumExcl = next.reduce(
-            (sum, e, i) => (i === idx ? sum : sum + (typeof e.weight === "number" ? e.weight : 0)),
-            0
-          );
-          if (sumExcl + newValue > 100) {
-            setTimeout(() => toast.error("Ponderea totală nu poate depăși 100%."), 0);
-            return prev;
-          }
-        }
-        (next[idx] as any)[field] = newValue;
-      } else {
-        (next[idx] as any)[field] = value;
       }
-      return next;
-    });
-  }
+
+      next[idx] = { ...next[idx], [field]: newValue };
+    } else {
+      next[idx] = { ...next[idx], [field]: value };
+    }
+
+    return next;
+  });
+}
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
