@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { BookOpen } from "lucide-react";
 import { PostActions } from "./_components/post-action";

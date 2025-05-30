@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CommentBox } from "./comment-box";
 import { CommentList } from "./comment-list";
 import { fetchCommentsTree } from "@/lib/fetchCommentsTrees";
-import { set } from "date-fns";
 
 interface Comment {
   id: string;
@@ -19,7 +17,6 @@ interface Comment {
 
 export function CommentSection({
   postId,
-  avatarUrl,
   postAuthorId,
   classroomId,
 }: {

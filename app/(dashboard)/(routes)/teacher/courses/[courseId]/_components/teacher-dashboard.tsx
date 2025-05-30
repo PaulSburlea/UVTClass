@@ -8,7 +8,7 @@ import { Classroom } from "@prisma/client";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export const TeacherDashboard = ({ userId }: { userId: string }) => {
-  const { data: courses, mutate } = useSWR<Classroom[]>("/api/courses", fetcher); // ✅ tiparește
+  const { data: courses } = useSWR<Classroom[]>("/api/courses", fetcher); // ✅ tiparește
 
   if (!userId) return null;
 

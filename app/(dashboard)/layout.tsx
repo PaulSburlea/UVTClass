@@ -13,7 +13,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const DashboardLayoutContent = ({ children }: { children: React.ReactNode }) => {
-  const { isSidebarOpen, isSidebarHovered, setIsSidebarOpen, setIsSidebarHovered } = useSidebar();
+  const { isSidebarOpen, isSidebarHovered, setIsSidebarHovered } = useSidebar();
 
   return (
     <div className="h-screen">

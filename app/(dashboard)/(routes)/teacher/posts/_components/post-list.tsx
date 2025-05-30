@@ -20,7 +20,6 @@ export function PostList({
   refetchKey,
   onPostUpdated,
   editable = true,
-  userId,
   userRole,             // role: "TEACHER" | "STUDENT"
 }: {
   courseId: string;

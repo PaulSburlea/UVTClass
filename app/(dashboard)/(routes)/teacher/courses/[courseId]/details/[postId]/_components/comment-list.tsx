@@ -3,7 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import Image from "next/image";
-import { CornerUpRight, MoreVertical } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { ro } from "date-fns/locale";
 import { toast } from "react-hot-toast";
