@@ -81,10 +81,11 @@ export async function DELETE(req: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Remove teacher error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Could not remove teacher", details: err.message },
+      { error: "Could not remove teacher", details: message },
       { status: 500 }
     );
   }

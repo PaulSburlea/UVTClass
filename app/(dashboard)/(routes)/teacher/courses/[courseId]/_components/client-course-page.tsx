@@ -5,11 +5,26 @@ import CourseCard from "./course-info";
 import { PostForm } from "../../../posts/_components/post-form";
 import { PostList } from "../../../posts/_components/post-list";
 
+// Tip care descrie proprietățile unui curs
+interface Course {
+  id: string;
+  userId: string;
+  name: string;
+  description: string;
+  section: string | null;
+  room: string | null;
+  subject: string | null;
+  code: string;
+  teacherId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface ClientCoursePageProps {
   courseId: string;
   userId: string;
-  course: any;
-  userRole: "TEACHER" | "STUDENT"; 
+  course: Course;
+  userRole: "TEACHER" | "STUDENT";
 }
 
 export const ClientCoursePage = ({
@@ -20,18 +35,16 @@ export const ClientCoursePage = ({
 }: ClientCoursePageProps) => {
   const [refetchKey, setRefetchKey] = useState(0);
 
-  // Handler pentru actualizarea postării
-  const handlePostUpdated = () => {
-    setRefetchKey((prev) => prev + 1);
-  };
+  // Handler pentru actualizarea listei de postări
+  const handlePostUpdated = () => setRefetchKey((prev) => prev + 1);
 
   return (
     <div className="pt-[50px] px-20 flex flex-col items-center">
       <CourseCard course={course} currentUserId={userId} />
-      <PostForm courseId={courseId} onMaterialAdded={() => setRefetchKey((prev) => prev + 1)} />
-      <PostList 
-        courseId={courseId} 
-        refetchKey={refetchKey} 
+      <PostForm courseId={courseId} onMaterialAdded={handlePostUpdated} />
+      <PostList
+        courseId={courseId}
+        refetchKey={refetchKey}
         onPostUpdated={handlePostUpdated}
         userRole={userRole}
       />

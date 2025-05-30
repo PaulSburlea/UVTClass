@@ -1,5 +1,3 @@
-// app/(dashboard)/(routes)/student/grades/[courseId]/page.tsx
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -42,22 +40,23 @@ const categoryColors: Record<GradeCategory, string> = {
 };
 
 export default function StudentCourseGradesPage() {
+  // React hooks must be at top level
   const params = useParams();
-  let courseId = params.courseId;
-
-  // Dacă useParams returnează array, luăm primul element
-  if (Array.isArray(courseId)) {
-    courseId = courseId[0];
-  }
-  // Dacă nu e definit, afișăm mesaj de eroare
-  if (!courseId) {
-    return <p className="text-center mt-8">ID curs invalid.</p>;
-  }
-
   const { user, isLoaded } = useUser();
   const [entries, setEntries] = useState<GradeEntry[]>([]);
   const [course, setCourse] = useState<Classroom | null>(null);
   const [search, setSearch] = useState("");
+
+  // Derive courseId
+  let courseId = params.courseId;
+  if (Array.isArray(courseId)) {
+    courseId = courseId[0];
+  }
+
+  // Early return if invalid courseId
+  if (!courseId) {
+    return <p className="text-center mt-8">ID curs invalid.</p>;
+  }
 
   // Fetch classroom details
   useEffect(() => {
@@ -171,7 +170,7 @@ export default function StudentCourseGradesPage() {
                   </td>
                   <td className="p-3">
                     <span
-                      className={`px-2 py-1 rounded ${categoryColors[e.category]}`}
+                      className={`px-2 py-1 rounded ${categoryColors[e.category]}`} 
                     >
                       {categoryLabels[e.category]}
                     </span>

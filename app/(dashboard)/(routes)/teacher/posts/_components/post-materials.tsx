@@ -199,7 +199,7 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
   // render modal conținut
   const renderModalContent = () => {
     if (!selected) return null;
-    const { filePath, url, type, title, id } = selected;
+    const { filePath, url, type, id } = selected;
     const ext = filePath?.split(".").pop()?.toLowerCase();
 
     if (type === MaterialType.YOUTUBE && url) {

@@ -21,6 +21,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Tip pentru fișiere externe (link YouTube, Drive, link)
+interface ExternalFile extends File {
+  __external: true;
+  __type: "YOUTUBE" | "LINK" | "DRIVE";
+  __url: string;
+}
+
+type PreviewFile = File | ExternalFile;
+
+// Helper pentru a detecta ExternalFile
+function isExternalFile(file: PreviewFile): file is ExternalFile {
+  return (file as ExternalFile).__external === true;
+}
+
 // helper care alege icon și culoare pe baza tipului MIME
 function getFileIconAndColor(mime: string) {
   if (mime.startsWith("image/")) {
@@ -85,7 +99,7 @@ export function PostForm({
 
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
-  const [filesPreview, setFilesPreview] = useState<File[]>([]);
+  const [filesPreview, setFilesPreview] = useState<PreviewFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -93,23 +107,23 @@ export function PostForm({
     fileInputRef.current?.click();
   };
 
-  const postExternalMaterial = (url: string, type: "YOUTUBE" | "LINK" | "DRIVE") => {
+  const postExternalMaterial = (url: string, type: ExternalFile['__type']) => {
     // dacă există deja un fakeFile extern cu aceeași adresă, nu-l adăugăm
-    const already = filesPreview.some(file =>
-      (file as any).__external && (file as any).__url === url
+    const already = filesPreview.some(
+      (file) => isExternalFile(file) && file.__url === url
     );
     if (already) {
       toast.error("Link-ul a fost deja adăugat.");
       return;
     }
-  
-    const fakeFile = new File([""], url);
-    setFilesPreview(prev => [
-      ...prev,
-      Object.assign(fakeFile, { __external: true, __type: type, __url: url }),
-    ]);
+
+    const fakeFile = new File([""], url) as ExternalFile;
+    fakeFile.__external = true;
+    fakeFile.__type = type;
+    fakeFile.__url = url;
+
+    setFilesPreview((prev) => [...prev, fakeFile]);
   };
-  
 
   const handleFileUpload = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -133,10 +147,11 @@ export function PostForm({
 
       toast.success("Fișiere încărcate cu succes!");
       onMaterialAdded?.();
-      fileInputRef.current!.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
       setFilesPreview([]);
-    } catch (err: any) {
-      toast.error("Eroare la încărcare: " + err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Eroare necunoscută";
+      toast.error("Eroare la încărcare: " + msg);
     } finally {
       setIsUploading(false);
     }
@@ -153,14 +168,14 @@ export function PostForm({
     formData.append("title", title);
     formData.append("content", text);
 
-    for (const file of filesPreview) {
-      if ((file as any).__external) {
-        formData.append("links", (file as any).__url);
-        formData.append("types", (file as any).__type);
+    filesPreview.forEach((file) => {
+      if (isExternalFile(file)) {
+        formData.append("links", file.__url);
+        formData.append("types", file.__type);
       } else {
         formData.append("files", file);
       }
-    }
+    });
 
     const response = await fetch("/api/post/create", {
       method: "POST",
@@ -183,20 +198,18 @@ export function PostForm({
     const files = e.target.files;
     if (files) {
       const newFiles = Array.from(files);
-      const uniqueFiles = newFiles.filter(
-        (file) => !filesPreview.some((previewFile) => previewFile.name === file.name)
+      const unique = newFiles.filter(
+        (file) => !filesPreview.some((pf) => pf.name === file.name)
       );
-      setFilesPreview((prev) => [...prev, ...uniqueFiles]);
+      setFilesPreview((prev) => [...prev, ...unique]);
     }
   };
 
-  const handleRemoveFile = (fileToRemove: File) => {
+  const handleRemoveFile = (fileToRemove: PreviewFile) => {
     setFilesPreview((prev) => prev.filter((file) => file !== fileToRemove));
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
+  
   return (
     <div className="mt-4 w-full max-w-screen-lg">
       <div
