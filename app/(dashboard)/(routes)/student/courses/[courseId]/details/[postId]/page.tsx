@@ -1,5 +1,3 @@
-// app/(dashboard)/(routes)/student/courses/[courseId]/details/[postId]/page.tsx
-
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { BookOpen } from "lucide-react";
@@ -7,18 +5,23 @@ import { currentUser } from "@clerk/nextjs/server";
 import { CommentSection } from "@/app/(dashboard)/(routes)/teacher/courses/[courseId]/details/[postId]/_components/comment-section";
 import { PostMaterials } from "@/app/(dashboard)/(routes)/teacher/posts/_components/post-materials";
 
-export default async function StudentPostDetails({
-  params,
-}: {
-  params: { courseId: string; postId: string };
-}) {
-  const { courseId, postId } = params;
+interface Props {
+  params: Promise<{
+    courseId: string;
+    postId: string;
+    postAuthorId: string;
+  }>;
+}
 
-  // 1) Get current user’s avatar
+export default async function StudentPostDetails(props: Props) {
+  const params = await props.params;
+  const { courseId, postId, postAuthorId } = params;
+
+  // 1) Îl folosim pe Clerk pentru a obține avatarul
   const user = await currentUser();
   const avatarUrl = user?.imageUrl ?? "/default-avatar.png";
 
-  // 2) Fetch post + materials
+  // 2) Luăm postarea + materiale
   const post = await db.post.findUnique({
     where: { id: postId },
     include: { materials: true },
@@ -48,19 +51,10 @@ export default async function StudentPostDetails({
         </div>
       </div>
 
-      {/* Materials & Content */}
-      <PostMaterials
-        post={{ ...post, content: post.content ?? undefined }}
-        materials={post.materials}
-      />
+    <PostMaterials post={{ ...post, content: post.content ?? undefined }} materials={post.materials} />
 
-      {/* Comments */}
-      <CommentSection
-        postId={postId}
-        avatarUrl={avatarUrl}
-        postAuthorId={post.authorId}
-        classroomId={courseId}
-      />
+      {/* Comentarii */}
+      <CommentSection postId={postId} avatarUrl={avatarUrl} postAuthorId={postAuthorId} classroomId={courseId}/>
     </div>
   );
 }
