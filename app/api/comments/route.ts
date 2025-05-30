@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +10,7 @@ export async function POST(req: Request) {
 
     const { postId, content, parentCommentId } = await req.json();
 
-    if (!postId || !content) {
+    if (!postId || !content?.trim()) {
       return new NextResponse("Missing fields", { status: 400 });
     }
 
@@ -40,7 +41,9 @@ export async function GET(req: Request) {
     return new NextResponse("Missing postId", { status: 400 });
   }
 
-  const where: any = { postId };
+  const where: Prisma.CommentWhereInput = { 
+    postId,
+    parentCommentId: parentCommentId ?? null, };
   if (parentCommentId) {
     where.parentCommentId = parentCommentId;
   } else {

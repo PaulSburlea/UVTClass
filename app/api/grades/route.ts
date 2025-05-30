@@ -98,7 +98,10 @@ export async function POST(req: NextRequest) {
     select: { name: true, userId: true },
   });
   const courseName = classroom?.name ?? "cursul tău";
-  const profId     = classroom?.userId!;
+if (!classroom || !classroom.userId) {
+  return NextResponse.json({ error: "Invalid classroom" }, { status: 404 });
+}
+const profId = classroom.userId;
 
   // 7. Preia numele profesorului din Clerk
   const prof     = await client.users.getUser(profId);
