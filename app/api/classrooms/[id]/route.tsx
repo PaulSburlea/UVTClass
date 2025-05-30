@@ -1,10 +1,8 @@
 // app/api/classroom/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();           // opțional, dacă vrei verificare
   const id = req.nextUrl.pathname.split("/").pop();
   if (!id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
