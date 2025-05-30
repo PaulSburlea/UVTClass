@@ -7,11 +7,11 @@ import { CommentSection } from "./_components/comment-section";
 import { PostMaterials } from "../../../../posts/_components/post-materials";
 
 interface Props {
-  params: {
+  params: Promise<{
     courseId: string;
     postId: string;
     postAuthorId: string;
-  };
+  }>;
 }
 
 export default async function PostDetailsPage({ params }: Props) {
