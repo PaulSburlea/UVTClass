@@ -10,12 +10,10 @@ interface Course {
   id: string;
   userId: string;
   name: string;
-  description: string;
   section: string | null;
   room: string | null;
   subject: string | null;
   code: string;
-  teacherId: string;
   createdAt: Date;
   updatedAt: Date;
 }
