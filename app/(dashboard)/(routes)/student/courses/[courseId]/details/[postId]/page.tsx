@@ -1,3 +1,5 @@
+// app/(dashboard)/(routes)/student/courses/[courseId]/details/[postId]/page.tsx
+
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { BookOpen } from "lucide-react";
@@ -5,21 +7,18 @@ import { currentUser } from "@clerk/nextjs/server";
 import { CommentSection } from "@/app/(dashboard)/(routes)/teacher/courses/[courseId]/details/[postId]/_components/comment-section";
 import { PostMaterials } from "@/app/(dashboard)/(routes)/teacher/posts/_components/post-materials";
 
-interface Props {
-  params: {
-    courseId: string;
-    postId: string;
-  };
-}
-
-export default async function StudentPostDetails({ params }: Props) {
+export default async function StudentPostDetails({
+  params,
+}: {
+  params: { courseId: string; postId: string };
+}) {
   const { courseId, postId } = params;
 
-  // 1) Îl folosim pe Clerk pentru a obține avatarul
+  // 1) Get current user’s avatar
   const user = await currentUser();
   const avatarUrl = user?.imageUrl ?? "/default-avatar.png";
 
-  // 2) Luăm postarea + materiale
+  // 2) Fetch post + materials
   const post = await db.post.findUnique({
     where: { id: postId },
     include: { materials: true },
@@ -49,10 +48,19 @@ export default async function StudentPostDetails({ params }: Props) {
         </div>
       </div>
 
-    <PostMaterials post={{ ...post, content: post.content ?? undefined }} materials={post.materials} />
+      {/* Materials & Content */}
+      <PostMaterials
+        post={{ ...post, content: post.content ?? undefined }}
+        materials={post.materials}
+      />
 
-      {/* Comentarii */}
-      <CommentSection postId={postId} avatarUrl={avatarUrl} postAuthorId={post.authorId} classroomId={courseId}/>
+      {/* Comments */}
+      <CommentSection
+        postId={postId}
+        avatarUrl={avatarUrl}
+        postAuthorId={post.authorId}
+        classroomId={courseId}
+      />
     </div>
   );
 }
