@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default async function StudentPostDetails({ params }: Props) {
-  const { courseId, postId, postAuthorId } = await params;
+  const { courseId, postId, postAuthorId } = params;
 
   // 1) Îl folosim pe Clerk pentru a obține avatarul
   const user = await currentUser();
