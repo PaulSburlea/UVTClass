@@ -16,11 +16,10 @@ async function deleteCommentRecursively(id: string) {
   await db.comment.delete({ where: { id } });
 }
 
-export async function DELETE(
-  req: NextRequest,
-  context: { params: { commentId: string } }
-) {
-  const { commentId } = context.params;
+export async function DELETE(req: NextRequest) {
+  const url = new URL(req.url);
+  const segments = url.pathname.split("/");
+  const commentId = segments[segments.length - 1]; // sau `.at(-1)` pentru ultima parte din url
 
   try {
     const user = await currentUser();
@@ -65,32 +64,36 @@ export async function DELETE(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  context: { params: { commentId: string } }
-) {
-  const { commentId } = context.params;
 
+// PATCH: editează un comentariu
+export async function PATCH(
+  req: Request,
+  context: { params: Promise<{ commentId: string }> }
+) {
   try {
     const user = await currentUser();
     if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
     const { content } = await req.json();
-    if (!content) return new NextResponse("Content required", { status: 400 });
+    if (!content) {
+      return new NextResponse("Content required", { status: 400 });
+    }
 
+    // Găsim comentariul existent în baza de date
     const existing = await db.comment.findUnique({
-      where: { id: commentId },
+      where: { id: (await context.params).commentId },
     });
 
     if (!existing || existing.authorId !== user.id) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
+    // Actualizăm comentariul și adăugăm data ultimei editări
     const updated = await db.comment.update({
-      where: { id: commentId },
+      where: { id: (await context.params).commentId },
       data: {
         content,
-        editedAt: new Date(),
+        editedAt: new Date(),  // Adăugăm data editării
       },
     });
 
