@@ -21,7 +21,6 @@ export default function StudentGradesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  // Fetch cursuri
   useEffect(() => {
     if (!user?.id) return;
     fetch("/api/student/courses")
@@ -37,7 +36,6 @@ export default function StudentGradesPage() {
       .finally(() => setLoading(false));
   }, [user?.id]);
 
-  // Filtrare după search
   useEffect(() => {
     const q = search.trim().toLowerCase();
     setFiltered(

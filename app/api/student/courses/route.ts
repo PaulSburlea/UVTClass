@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
           name: true,
           section: true,
           code: true,
-          userId: true, // profesorul creator
+          userId: true,
         },
       },
     },

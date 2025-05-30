@@ -9,19 +9,29 @@ generator client {
 }
 
 model Classroom {
-  id        String   @id @default(uuid())
-  userId    String   // profesorul (creatorul) cursului
-  name      String   @db.Text
-  section   String?
-  subject   String?
-  room      String?
-  code      String   @unique
+  id         String    @id @default(uuid())
+  userId     String
+  teacher    Teacher   @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-  users     UserClassroom[]
-  posts     Post[]
+  name       String    @db.Text
+  section    String?
+  subject    String?
+  room       String?
+  code       String    @unique
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  users      UserClassroom[]
+  posts      Post[]
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Teacher {
+  userId      String      @id
+  createdAt   DateTime    @default(now())
+  classrooms  Classroom[]
 }
 
 model UserClassroom {
@@ -32,9 +42,11 @@ model UserClassroom {
 
   classroom    Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   @@unique([classroomId, userId])
+  @@index([userId])
+  @@index([classroomId])
 }
 
 enum UserRole {
@@ -42,19 +54,19 @@ enum UserRole {
   STUDENT
 }
 
-
 model Post {
   id          String     @id @default(uuid())
-  authorId    String     
+  authorId    String
   authorName  String?
   classroomId String
-  title       String     
-  content     String?     @db.Text
+
+  title       String
+  content     String?    @db.Text
 
   classroom   Classroom  @relation(fields: [classroomId], references: [id], onDelete: Cascade)
 
   materials   Material[]
-  comments    Comment[]  @relation(name: "PostComments")
+  comments    Comment[]
 
   createdAt   DateTime   @default(now())
   editedAt    DateTime?  
@@ -63,17 +75,17 @@ model Post {
 }
 
 model Material {
-  id        String        @id @default(uuid())
-  name      String?
-  postId    String?
-  title     String
-  type      MaterialType
-  filePath  String?       @db.Text
-  url       String?       @db.Text
+  id         String      @id @default(uuid())
+  name       String?
+  postId     String?
+  title      String
+  type       MaterialType
+  filePath   String?     @db.Text
+  url        String?     @db.Text
 
-  post      Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post       Post?       @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  uploadedAt DateTime     @default(now())
+  uploadedAt DateTime    @default(now())
 
   @@index([postId])
 }
@@ -87,9 +99,9 @@ model Comment {
   content         String     @db.Text
   parentCommentId String?
 
-  post            Post       @relation(name: "PostComments", fields: [postId], references: [id], onDelete: Cascade)
+  post            Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  parentComment   Comment?   @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentComment   Comment?   @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: NoAction,  onUpdate: NoAction)
   replies         Comment[]  @relation("CommentReplies")
 
   createdAt       DateTime   @default(now())
@@ -99,12 +111,9 @@ model Comment {
   @@index([parentCommentId])
 }
 
-model Admin {
-  userId    String   @id
-  createdAt DateTime @default(now())
-}
 
-model Teacher {
+
+model Admin {
   userId    String   @id
   createdAt DateTime @default(now())
 }
@@ -118,22 +127,21 @@ enum GradeCategory {
 }
 
 model Grade {
-  id           String         @id @default(uuid())
-  courseId     String
-  studentId    String
-  category     GradeCategory
-  title        String 
-  date         DateTime 
-  score        Float
-  weight       Float     
-  position     Int    
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id        String       @id @default(uuid())
+  courseId  String
+  studentId String
+  category  GradeCategory
+  title     String
+  date      DateTime
+  score     Float
+  weight    Float
+  position  Int
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@index([courseId])
   @@index([studentId])
 }
-
 
 enum MaterialType {
   FILE

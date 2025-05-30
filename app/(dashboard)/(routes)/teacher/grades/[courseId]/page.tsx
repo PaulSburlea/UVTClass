@@ -3,12 +3,14 @@
 import { auth, clerkClient, type User } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import StudentsSearchList from "./_components/students-search-list";
+import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
 
 interface ServerProps {
-  params: { courseId: string };
+  params: Promise<{ courseId: string }>;
 }
 
-export default async function CourseStudentsPage({ params }: ServerProps) {
+export default async function CourseStudentsPage(props: ServerProps) {
+  const params = await props.params;
   const { courseId } = params;
   const { userId } = await auth();
   if (!userId) return null;
@@ -40,10 +42,15 @@ export default async function CourseStudentsPage({ params }: ServerProps) {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-800">Studenți înscriși</h1>
+    <>
+      {/* Sub-navbar fixed */}
+      <CourseSubNavbar courseId={courseId} />
 
-      <StudentsSearchList students={students} courseId={courseId} />
-    </div>
+      {/* Conținutul are padding-top pentru a nu fi acoperit de sub-navbar */}
+      <div className="pt-20 px-6 space-y-6">
+        <h1 className="text-xl font-semibold">Studenți înscriși</h1>
+        <StudentsSearchList students={students} courseId={courseId} />
+      </div>
+    </>
   );
 }

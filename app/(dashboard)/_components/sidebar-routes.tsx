@@ -60,15 +60,15 @@ export const SidebarRoutes = ({
   };
   const teacherMain = [
     homeRoute,
-    { icon: GraduationCap, label: "Note", href: "/teacher/grades" },
+    { icon: GraduationCap, label: "Catalog", href: "/teacher/grades" },
   ];
   const studentMain = [
     homeRoute,
-    { icon: GraduationCap, label: "Note", href: "/student/grades" },
+    { icon: GraduationCap, label: "Catalog", href: "/student/grades" },
   ];
   const guestMain = [
     homeRoute,
-    { icon: GraduationCap, label: "Note", href: "/grades" },
+    { icon: GraduationCap, label: "Catalog", href: "/grades" },
   ];
 
   return (

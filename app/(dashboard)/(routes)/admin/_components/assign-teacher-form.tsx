@@ -1,30 +1,38 @@
-// frontend/app/(dashboard)/(routes)/admin/_components/AssignTeacherForm.tsx
 "use client";
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { useSWRConfig } from "swr";
 
 export default function AssignTeacherForm() {
-  const [email, setEmail]     = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const { mutate } = useSWRConfig();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
-    const res = await fetch("/api/admin/assign-teacher", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      const res = await fetch("/api/admin/assign-teacher", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
-    setLoading(false);
-    if (res.ok) {
-      toast.success("Rolul Teacher a fost atribuit!");
-      setEmail("");
-    } else {
-      const { error } = await res.json();
-      toast.error(error || "Eroare la atribuire");
+      if (res.ok) {
+        toast.success("Rolul Teacher a fost atribuit!");
+        setEmail("");
+        // Revalidate lista de profesori
+        mutate("/api/admin/teachers");
+      } else {
+        const { error } = await res.json();
+        toast.error(error || "Eroare la atribuire");
+      }
+    } catch {
+      toast.error("Eroare de rețea");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -42,7 +50,7 @@ export default function AssignTeacherForm() {
       <button
         type="submit"
         disabled={loading}
-        className="px-4 py-2 bg-blue-600 text-white rounded"
+        className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
       >
         {loading ? "Se atribuie..." : "Atribuie"}
       </button>

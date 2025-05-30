@@ -1,11 +1,15 @@
+// app/(dashboard)/(routes)/teacher/grades/[courseId]/[studentId]/page.tsx
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 import { GradeCategory } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-hot-toast";
+import { ArrowLeft } from "lucide-react";
 
 interface GradeEntry {
   id?: string;
@@ -133,7 +137,6 @@ export default function StudentGradePage() {
         }
         (next[idx] as any)[field] = newValue;
       } else {
-        // aici e castul care îndepărtează eroarea TS
         (next[idx] as any)[field] = value;
       }
       return next;
@@ -179,106 +182,118 @@ export default function StudentGradePage() {
   }
 
   return (
-    <Card className="max-w-4xl mx-auto mt-6">
-      <CardHeader>
-        <CardTitle>Notarea studentului</CardTitle>
-        <div className="mt-2 text-lg font-medium text-gray-700">
-          Media ponderată: {weightedAverage.toFixed(2)} / 10
-        </div>
-        <div className="text-sm text-gray-500">Total pondere: {totalWeight}%</div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <table className="w-full table-auto border-collapse rounded-lg overflow-hidden">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-2 text-left">Categorie</th>
-                <th className="p-2 text-left">Titlu</th>
-                <th className="p-2 text-left">Data</th>
-                <th className="p-2 text-left">Notă</th>
-                <th className="p-2 text-left">Pondere (%)</th>
-                <th className="p-2 text-left">Acțiuni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((row, i) => (
-                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                  <td className="p-1">
-                    <select
-                      value={row.category}
-                      onChange={(e) => updateRow(i, "category", e.target.value as GradeCategory)}
-                      className="w-full p-1 rounded border border-gray-300"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {categoryLabels[cat]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="p-1">
-                    <input
-                      type="text"
-                      value={row.title}
-                      onChange={(e) => updateRow(i, "title", e.target.value)}
-                      className={`w-full p-1 rounded border ${
-                        invalidFields[i]?.includes("title") ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                  </td>
-                  <td className="p-1">
-                    <input
-                      type="date"
-                      value={row.date}
-                      onChange={(e) => updateRow(i, "date", e.target.value)}
-                      className={`w-full p-1 rounded border ${
-                        invalidFields[i]?.includes("date") ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                  </td>
-                  <td className="p-1">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={row.score}
-                      onChange={(e) => updateRow(i, "score", e.target.value)}
-                      className={`w-full p-1 rounded border ${
-                        invalidFields[i]?.includes("score") ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                  </td>
-                  <td className="p-1">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={row.weight}
-                      onChange={(e) => updateRow(i, "weight", e.target.value)}
-                      className={`w-full p-1 rounded border ${
-                        invalidFields[i]?.includes("weight") ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
-                  </td>
-                  <td className="p-1 text-center">
-                    <button
-                      type="button"
-                      onClick={() => removeRow(i)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Șterge
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="flex justify-between">
-            <Button variant="outline" type="button" onClick={addRow}>
-              + Adaugă evaluare
-            </Button>
-            <Button type="submit">Salvează note</Button>
+    <>
+      {/* Buton Înapoi */}
+      <div className="max-w-4xl mx-auto mt-4">
+        <Link href={`/teacher/grades/${courseId}`} legacyBehavior>
+          <Button variant="ghost" size="sm" className="flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Înapoi
+          </Button>
+        </Link>
+      </div>
+
+      {/* Card pentru notare */}
+      <Card className="max-w-4xl mx-auto mt-2">
+        <CardHeader>
+          <CardTitle>Notarea studentului</CardTitle>
+          <div className="mt-2 text-lg font-medium text-gray-700">
+            Media ponderată: {weightedAverage.toFixed(2)} / 10
           </div>
-        </form>
-      </CardContent>
-    </Card>
+          <div className="text-sm text-gray-500">Total pondere: {totalWeight}%</div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <table className="w-full table-auto border-collapse rounded-lg overflow-hidden">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-2 text-left">Categorie</th>
+                  <th className="p-2 text-left">Titlu</th>
+                  <th className="p-2 text-left">Data</th>
+                  <th className="p-2 text-left">Notă</th>
+                  <th className="p-2 text-left">Pondere (%)</th>
+                  <th className="p-2 text-left">Acțiuni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((row, i) => (
+                  <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                    <td className="p-1">
+                      <select
+                        value={row.category}
+                        onChange={(e) => updateRow(i, "category", e.target.value as GradeCategory)}
+                        className="w-full p-1 rounded border border-gray-300"
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {categoryLabels[cat]}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="text"
+                        value={row.title}
+                        onChange={(e) => updateRow(i, "title", e.target.value)}
+                        className={`w-full p-1 rounded border ${
+                          invalidFields[i]?.includes("title") ? "border-red-500" : "border-gray-300"
+                        }`}
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="date"
+                        value={row.date}
+                        onChange={(e) => updateRow(i, "date", e.target.value)}
+                        className={`w-full p-1 rounded border ${
+                          invalidFields[i]?.includes("date") ? "border-red-500" : "border-gray-300"
+                        }`}
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={row.score}
+                        onChange={(e) => updateRow(i, "score", e.target.value)}
+                        className={`w-full p-1 rounded border ${
+                          invalidFields[i]?.includes("score") ? "border-red-500" : "border-gray-300"
+                        }`}
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={row.weight}
+                        onChange={(e) => updateRow(i, "weight", e.target.value)}
+                        className={`w-full p-1 rounded border ${
+                          invalidFields[i]?.includes("weight") ? "border-red-500" : "border-gray-300"
+                        }`}
+                      />
+                    </td>
+                    <td className="p-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => removeRow(i)}
+                        className="text-red-600 hover:underline"
+                      >
+                        Șterge
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="flex justify-between">
+              <Button variant="outline" type="button" onClick={addRow}>
+                + Adaugă evaluare
+              </Button>
+              <Button type="submit">Salvează note</Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </>
   );
 }
