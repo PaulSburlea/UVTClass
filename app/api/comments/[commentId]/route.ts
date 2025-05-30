@@ -18,7 +18,7 @@ async function deleteCommentRecursively(id: string) {
 }
 
 // DELETE: șterge un comentariu (cu toţi descendenții)
-export async function DELETE(req: Request, props: { params: Promise<{ commentId: string }> }) {
+export async function DELETE(_req: Request, props: { params: Promise<{ commentId: string }> }) {
   const params = await props.params;
 
   const {

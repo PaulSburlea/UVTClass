@@ -16,7 +16,6 @@ export async function POST(req: Request) {
   const title = formData.get("title") as string;
   const typeString = formData.get("type") as string;
 
-  // ✅ convertim stringul într-o valoare din enum
   const type = MaterialType[typeString as keyof typeof MaterialType] ?? MaterialType.LINK;
 
   if (!courseId || !content) {
