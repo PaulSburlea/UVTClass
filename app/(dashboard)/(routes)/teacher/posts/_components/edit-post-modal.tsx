@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
+import Image from "next/image";
 import {
   Upload,
   Link as LinkIcon,
@@ -234,26 +235,30 @@ filesPreview.forEach((f) => {
                         />
                       </div>
                     );
-                  } else if (isExternal && (type === "LINK") && url) {
-                    const imgUrl =
-                      linkPreviews[file.name]?.image ||
-                      `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}`;
-                    thumb = (
-                      <img
-                        src={imgUrl}
-                        className="w-12 h-12 object-cover rounded"
-                        alt="link preview"
-                      />
-                    );
-                  } else if (!isExternal && file.type.startsWith("image/")) {
-                    thumb = (
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={file.name}
-                        className="w-12 h-12 object-cover rounded"
-                      />
-                    );
-                  } else {
+                                } else if (isExternal && type === "LINK" && url) {
+                const imgUrl =
+                  linkPreviews[file.name]?.image ||
+                  `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}`;
+                thumb = (
+                  <Image
+                    src={imgUrl}
+                    alt="Preview link"
+                    width={48}
+                    height={48}
+                    className="object-cover rounded cursor-pointer"
+                  />
+                );
+              } else if (!isExternal && file.type.startsWith("image/")) {
+                thumb = (
+                  <Image
+                    src={URL.createObjectURL(file)}
+                    alt={file.name}
+                    width={48}
+                    height={48}
+                    className="object-cover rounded cursor-pointer"
+                  />
+                );
+              } else {
                     const mime = isExternal ? "application/octet-stream" : file.type;
                     const { icon, bg } = getFileIconAndColor(mime);
                     thumb = (
