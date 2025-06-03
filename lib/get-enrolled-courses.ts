@@ -1,8 +1,6 @@
-// lib/get-enrolled-courses.ts
-
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import type { Classroom } from "@prisma/client";
+import type { Classroom } from "@/app/types/classroom";
 
 export const getEnrolledCourses = async (): Promise<Classroom[]> => {
   const { userId } = await auth();
