@@ -1,8 +1,8 @@
 // frontend/app/api/admin/teachers/route.ts
+
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import type { Teacher } from "@prisma/client";
 
 export async function GET() {
   // 1. authorize
@@ -15,12 +15,14 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // 2. preluăm toți profesorii, TS înțelege acum că `teachers` este `Teacher[]`
-  const teachers: Teacher[] = await db.teacher.findMany();
+  // 2. preluăm toți profesorii (TS îi vede ca { userId: string }[])
+  const teachers = await db.teacher.findMany({
+    select: { userId: true },
+  });
 
   // 3. build răspuns „enhanced”
   const enhanced = await Promise.all(
-    teachers.map(async (t: Teacher) => {
+    teachers.map(async (t: { userId: string }) => {
       // 3a. info Clerk
       const client = await clerkClient();
       const user = await client.users.getUser(t.userId);
@@ -33,13 +35,12 @@ export async function GET() {
         where: { userId: t.userId },
         select: { name: true },
       });
-      // aici `courses` este { name: string }[] și TS știe tipul lui `c`
 
       return {
         userId: t.userId,
         name,
         email,
-        courses: courses.map((c) => c.name),
+        courses: courses.map((c: { name: string }) => c.name),
       };
     })
   );
