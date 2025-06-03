@@ -1,4 +1,5 @@
 // frontend/app/api/post/[postId]/route.ts
+
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
@@ -31,11 +32,12 @@ async function requireTeacher(postId: string, userId: string) {
   return !!e;
 }
 
-// —————————————— DELETE ——————————————
+// ── DELETE ─────────────────────────────────────────────────────────────────────
 export async function DELETE(
+  _request: Request,
   context: { params: Promise<{ postId: string }> }
 ) {
-  const { postId } = (await context.params);
+  const { postId } = await context.params;
   const { userId } = await auth();
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
@@ -53,12 +55,12 @@ export async function DELETE(
   }
 }
 
-// —————————————— PUT ——————————————
+// ── PUT ────────────────────────────────────────────────────────────────────────
 export async function PUT(
-  req: Request,
+  request: Request,
   context: { params: Promise<{ postId: string }> }
 ) {
-  const { postId } = (await context.params);
+  const { postId } = await context.params;
   const { userId } = await auth();
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
@@ -66,7 +68,7 @@ export async function PUT(
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const formData = await req.formData();
+  const formData = await request.formData();
   const title = formData.get("title")?.toString().trim();
   const content = formData.get("content")?.toString() ?? null;
   if (!title) return new NextResponse("Titlul este obligatoriu", { status: 400 });
@@ -118,11 +120,12 @@ export async function PUT(
   }
 }
 
-// —————————————— GET ——————————————
+// ── GET ────────────────────────────────────────────────────────────────────────
 export async function GET(
+  _request: Request,
   context: { params: Promise<{ postId: string }> }
 ) {
-  const { postId } = (await context.params);
+  const { postId } = await context.params;
   const { userId } = await auth();
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
