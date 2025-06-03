@@ -1,0 +1,1 @@
+export type GradeCategory = "EXAM" | "QUIZ" | "HOMEWORK" | "PROJECT" | "OTHER";

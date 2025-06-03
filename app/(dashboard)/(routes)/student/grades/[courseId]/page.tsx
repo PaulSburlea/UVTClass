@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { GradeCategory } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
+
+import type { GradeCategory } from "@/app/types/grade";
 
 interface GradeEntry {
   id?: string;
@@ -40,18 +41,15 @@ const categoryColors: Record<GradeCategory, string> = {
 };
 
 export default function StudentCourseGradesPage() {
-  // 1. Hooks must always run
   const params = useParams();
   const { user, isLoaded } = useUser();
   const [entries, setEntries] = useState<GradeEntry[]>([]);
   const [course, setCourse] = useState<Classroom | null>(null);
   const [search, setSearch] = useState("");
 
-  // 2. Derive courseId
   const rawId = params.courseId;
   const courseId = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  // 3. Effects
   useEffect(() => {
     if (!courseId) return;
     fetch(`/api/classrooms/${courseId}`)
@@ -83,7 +81,6 @@ export default function StudentCourseGradesPage() {
       .catch(() => toast.error("Eroare la încărcarea notelor"));
   }, [isLoaded, user?.id, courseId]);
 
-  // 4. Memos
   const filtered = useMemo(
     () =>
       entries.filter((e) =>
@@ -106,7 +103,6 @@ export default function StudentCourseGradesPage() {
     [filtered, totalWeight]
   );
 
-  // 5. Conditional UI after hooks
   if (!courseId) {
     return <p className="text-center mt-8">ID curs invalid.</p>;
   }
@@ -114,7 +110,6 @@ export default function StudentCourseGradesPage() {
     return <p className="text-center mt-8">Se încarcă...</p>;
   }
 
-  // 6. Render UI
   return (
     <>
       <CourseSubNavbar courseId={courseId} />
@@ -165,7 +160,8 @@ export default function StudentCourseGradesPage() {
                   </td>
                   <td className="p-3">
                     <span
-                      className={`px-2 py-1 rounded ${categoryColors[e.category]}`}>
+                      className={`px-2 py-1 rounded ${categoryColors[e.category]}`}
+                    >
                       {categoryLabels[e.category]}
                     </span>
                   </td>
