@@ -85,14 +85,14 @@ export async function POST(req: Request) {
 
   // ————————— email notification logic ——————————
   // 1. Preluăm studenții înscriși (folosim literal "STUDENT" în loc de UserRole.STUDENT)
-  const enrollments = await db.userClassroom.findMany({
+  const enrollments: Array<{ userId: string }> = await db.userClassroom.findMany({
     where: {
       classroomId: courseId,
-      role:        "STUDENT", 
+      role:        "STUDENT",
     },
     select: { userId: true },
   });
-  const studentIds = enrollments.map(e => e.userId);
+  const studentIds = enrollments.map((e) => e.userId);
 
   // 2. Luăm obiectele User din Clerk
   const studentResponse = await client.users.getUserList({ userId: studentIds });
@@ -120,7 +120,7 @@ export async function POST(req: Request) {
         <hr/>
         <p>O zi bună!</p>
       `,
-      fromName: userName, 
+      fromName: userName,
     });
   });
 
