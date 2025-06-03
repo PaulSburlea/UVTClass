@@ -26,12 +26,15 @@ model Classroom {
   updatedAt  DateTime  @updatedAt
 
   @@index([userId])
+  @@map("classroom")
 }
 
 model Teacher {
   userId      String      @id
   createdAt   DateTime    @default(now())
   classrooms  Classroom[]
+
+  @@map("teacher")
 }
 
 model UserClassroom {
@@ -47,6 +50,7 @@ model UserClassroom {
   @@unique([classroomId, userId])
   @@index([userId])
   @@index([classroomId])
+  @@map("userclassroom")
 }
 
 enum UserRole {
@@ -69,9 +73,10 @@ model Post {
   comments    Comment[]
 
   createdAt   DateTime   @default(now())
-  editedAt    DateTime?  
+  editedAt    DateTime?
 
   @@index([classroomId])
+  @@map("post")
 }
 
 model Material {
@@ -88,6 +93,7 @@ model Material {
   uploadedAt DateTime    @default(now())
 
   @@index([postId])
+  @@map("material")
 }
 
 model Comment {
@@ -109,13 +115,14 @@ model Comment {
 
   @@index([postId])
   @@index([parentCommentId])
+  @@map("comment")
 }
-
-
 
 model Admin {
   userId    String   @id
   createdAt DateTime @default(now())
+
+  @@map("admin")
 }
 
 enum GradeCategory {
@@ -141,6 +148,7 @@ model Grade {
 
   @@index([courseId])
   @@index([studentId])
+  @@map("grade")
 }
 
 enum MaterialType {
