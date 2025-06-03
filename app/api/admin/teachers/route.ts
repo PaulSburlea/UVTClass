@@ -33,7 +33,7 @@ export async function GET() {
         const user = await client.users.getUser(t.userId);
         name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "N/A";
         email = user.emailAddresses?.[0]?.emailAddress || "N/A";
-      } catch (err: any) {
+      } catch  {
         // Dacă Clerk răspunde cu 404 pentru acest userId, pur și simplu îl ocolim:
         console.warn(`Clerk getUser(${t.userId}) a dat 404, ignorăm acest userId.`);
       }
