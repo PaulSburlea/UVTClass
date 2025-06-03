@@ -5,7 +5,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { GradeCategory } from "@prisma/client";
+
+// Înlocuim importul din @prisma/client cu tipul nostru
+import type { GradeCategory } from "@/app/types/grade";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-hot-toast";
@@ -31,6 +34,7 @@ type GradePayload = {
   position: number;
 };
 
+// Etichete (label-uri) pentru fiecare categorie
 const categoryLabels: Record<GradeCategory, string> = {
   EXAM: "Examen",
   QUIZ: "Test",
@@ -45,9 +49,20 @@ export default function StudentGradePage() {
   const courseId = params?.courseId as string;
   const studentId = params?.studentId as string;
 
-  const categories = Object.values(GradeCategory);
+  // Deoarece GradeCategory e un type, nu un obiect real,
+  // construim manual array-ul cu toate valorile permise:
+  const categories: GradeCategory[] = [
+    "HOMEWORK",
+    "QUIZ",
+    "PROJECT",
+    "EXAM",
+    "OTHER",
+  ];
+
   const [entries, setEntries] = useState<GradeEntry[]>([]);
-  const [invalidFields, setInvalidFields] = useState<Record<number, (keyof GradeEntry)[]>>({});
+  const [invalidFields, setInvalidFields] = useState<
+    Record<number, (keyof GradeEntry)[]>
+  >({});
 
   useEffect(() => {
     if (!courseId || !studentId) return;
@@ -68,7 +83,11 @@ export default function StudentGradePage() {
   }, [courseId, studentId]);
 
   const totalWeight = useMemo(
-    () => entries.reduce((sum, e) => sum + (typeof e.weight === "number" ? e.weight : 0), 0),
+    () =>
+      entries.reduce(
+        (sum, e) => sum + (typeof e.weight === "number" ? e.weight : 0),
+        0
+      ),
     [entries]
   );
   const weightedAverage = useMemo(() => {
@@ -88,7 +107,7 @@ export default function StudentGradePage() {
     setEntries((prev) => [
       ...prev,
       {
-        category: GradeCategory.OTHER,
+        category: "OTHER",
         title: "",
         date: new Date().toISOString().slice(0, 10),
         score: "",
@@ -111,50 +130,51 @@ export default function StudentGradePage() {
     }
   }
 
-function updateRow(
-  idx: number,
-  field: keyof GradeEntry,
-  value: string | number
-) {
-  setEntries((prev) => {
-    const next = [...prev];
+  function updateRow(
+    idx: number,
+    field: keyof GradeEntry,
+    value: string | number
+  ) {
+    setEntries((prev) => {
+      const next = [...prev];
 
-    if (field === "score" || field === "weight") {
-      if (value === "") {
-        (next[idx] as GradeEntry)[field] = value;
-        return next;
-      }
+      if (field === "score" || field === "weight") {
+        if (value === "") {
+          (next[idx] as GradeEntry)[field] = value;
+          return next;
+        }
 
-      const newValue = typeof value === "string" ? parseFloat(value) : value;
+        const newValue = typeof value === "string" ? parseFloat(value) : value;
+        if (isNaN(newValue)) return prev;
 
-      if (isNaN(newValue)) return prev;
-
-      if (field === "score" && (newValue < 0 || newValue > 10)) {
-        setTimeout(() => toast.error("Nota trebuie să fie între 0 și 10."), 0);
-        return prev;
-      }
-
-      if (field === "weight") {
-        const sumExcl = next.reduce((sum, e, i) => {
-          if (i === idx) return sum;
-          return sum + (typeof e.weight === "number" ? e.weight : 0);
-        }, 0);
-
-        if (sumExcl + newValue > 100) {
-          setTimeout(() => toast.error("Ponderea totală nu poate depăși 100%."), 0);
+        if (field === "score" && (newValue < 0 || newValue > 10)) {
+          setTimeout(() => toast.error("Nota trebuie să fie între 0 și 10."), 0);
           return prev;
         }
+
+        if (field === "weight") {
+          const sumExcl = next.reduce((sum, e, i) => {
+            if (i === idx) return sum;
+            return sum + (typeof e.weight === "number" ? e.weight : 0);
+          }, 0);
+
+          if (sumExcl + newValue > 100) {
+            setTimeout(
+              () => toast.error("Ponderea totală nu poate depăși 100%."),
+              0
+            );
+            return prev;
+          }
+        }
+
+        next[idx] = { ...next[idx], [field]: newValue };
+      } else {
+        next[idx] = { ...next[idx], [field]: value };
       }
 
-      next[idx] = { ...next[idx], [field]: newValue };
-    } else {
-      next[idx] = { ...next[idx], [field]: value };
-    }
-
-    return next;
-  });
-}
-
+      return next;
+    });
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -212,7 +232,9 @@ function updateRow(
           <div className="mt-2 text-lg font-medium text-gray-700">
             Media ponderată: {weightedAverage.toFixed(2)} / 10
           </div>
-          <div className="text-sm text-gray-500">Total pondere: {totalWeight}%</div>
+          <div className="text-sm text-gray-500">
+            Total pondere: {totalWeight}%
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
@@ -229,11 +251,16 @@ function updateRow(
               </thead>
               <tbody>
                 {entries.map((row, i) => (
-                  <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                  <tr
+                    key={i}
+                    className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                  >
                     <td className="p-1">
                       <select
                         value={row.category}
-                        onChange={(e) => updateRow(i, "category", e.target.value as GradeCategory)}
+                        onChange={(e) =>
+                          updateRow(i, "category", e.target.value as GradeCategory)
+                        }
                         className="w-full p-1 rounded border border-gray-300"
                       >
                         {categories.map((cat) => (
@@ -249,7 +276,9 @@ function updateRow(
                         value={row.title}
                         onChange={(e) => updateRow(i, "title", e.target.value)}
                         className={`w-full p-1 rounded border ${
-                          invalidFields[i]?.includes("title") ? "border-red-500" : "border-gray-300"
+                          invalidFields[i]?.includes("title")
+                            ? "border-red-500"
+                            : "border-gray-300"
                         }`}
                       />
                     </td>
@@ -259,7 +288,9 @@ function updateRow(
                         value={row.date}
                         onChange={(e) => updateRow(i, "date", e.target.value)}
                         className={`w-full p-1 rounded border ${
-                          invalidFields[i]?.includes("date") ? "border-red-500" : "border-gray-300"
+                          invalidFields[i]?.includes("date")
+                            ? "border-red-500"
+                            : "border-gray-300"
                         }`}
                       />
                     </td>
@@ -270,7 +301,9 @@ function updateRow(
                         value={row.score}
                         onChange={(e) => updateRow(i, "score", e.target.value)}
                         className={`w-full p-1 rounded border ${
-                          invalidFields[i]?.includes("score") ? "border-red-500" : "border-gray-300"
+                          invalidFields[i]?.includes("score")
+                            ? "border-red-500"
+                            : "border-gray-300"
                         }`}
                       />
                     </td>
@@ -281,7 +314,9 @@ function updateRow(
                         value={row.weight}
                         onChange={(e) => updateRow(i, "weight", e.target.value)}
                         className={`w-full p-1 rounded border ${
-                          invalidFields[i]?.includes("weight") ? "border-red-500" : "border-gray-300"
+                          invalidFields[i]?.includes("weight")
+                            ? "border-red-500"
+                            : "border-gray-300"
                         }`}
                       />
                     </td>

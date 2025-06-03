@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { ClassroomPeople } from "./_components/people";
 import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
 
-// importă tipurile tale custom, nu `@prisma/client`
 import type { UserClassroom } from "@/app/types/userClassroom";
 
 interface Person {
