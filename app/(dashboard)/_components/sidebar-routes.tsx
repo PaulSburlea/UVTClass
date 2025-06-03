@@ -1,4 +1,4 @@
-// app/(dashboard)/_components/sidebar-routes.tsx
+// app/(dashboard)/(routes)/_components/sidebar-routes.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,14 +6,21 @@ import useSWR from "swr";
 import { House, GraduationCap, UsersRound, ChevronDown } from "lucide-react";
 import { SidebarItem } from "./sidebar-item";
 import { usePathname } from "next/navigation";
-import { Classroom } from "@prisma/client";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+import type { Classroom } from "@/app/types/classroom";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const getColorForCourse = (name: string) => {
   const colors = [
-    "bg-red-500","bg-green-500","bg-blue-500","bg-yellow-500",
-    "bg-purple-500","bg-pink-500","bg-indigo-500","bg-orange-500",
+    "bg-red-500",
+    "bg-green-500",
+    "bg-blue-500",
+    "bg-yellow-500",
+    "bg-purple-500",
+    "bg-pink-500",
+    "bg-indigo-500",
+    "bg-orange-500",
   ];
   return colors[name.charCodeAt(0) % colors.length];
 };
@@ -45,7 +52,7 @@ export const SidebarRoutes = ({
   const [isTeachingOpen, setIsTeachingOpen] = useState(true);
   const [isEnrolledOpen, setIsEnrolledOpen] = useState(true);
 
-  // când sidebar se închide, resetăm dropdown‑urile
+  // când sidebar se închide, resetăm dropdown-urile
   useEffect(() => {
     if (!isSidebarOpen) {
       setIsTeachingOpen(true);
@@ -56,7 +63,11 @@ export const SidebarRoutes = ({
   const homeRoute = {
     icon: House,
     label: "Acasă",
-    href: isTeacherPage ? "/teacher" : isStudentPage ? "/student" : "/",
+    href: isTeacherPage
+      ? "/teacher"
+      : isStudentPage
+      ? "/student"
+      : "/",
   };
   const teacherMain = [
     homeRoute,
@@ -79,7 +90,7 @@ export const SidebarRoutes = ({
         : isStudentPage
         ? studentMain
         : guestMain
-      ).map(route => (
+      ).map((route) => (
         <SidebarItem
           key={route.href}
           icon={route.icon}
@@ -109,11 +120,11 @@ export const SidebarRoutes = ({
                 />
               )
             }
-            onClick={() => setIsTeachingOpen(o => !o)}
+            onClick={() => setIsTeachingOpen((o) => !o)}
           />
           {isTeachingOpen &&
             (isSidebarOpen || isSidebarHovered) &&
-            teachingCourses.map(c => (
+            teachingCourses.map((c) => (
               <SidebarItem
                 key={c.id}
                 leadingIcon={
@@ -154,11 +165,11 @@ export const SidebarRoutes = ({
                 />
               )
             }
-            onClick={() => setIsEnrolledOpen(o => !o)}
+            onClick={() => setIsEnrolledOpen((o) => !o)}
           />
           {isEnrolledOpen &&
             (isSidebarOpen || isSidebarHovered) &&
-            enrolledCourses.map(c => (
+            enrolledCourses.map((c) => (
               <SidebarItem
                 key={c.id}
                 leadingIcon={

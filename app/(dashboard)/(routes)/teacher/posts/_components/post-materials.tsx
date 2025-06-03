@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Material, MaterialType } from "@prisma/client";
+
+// Înlocuim importul din @prisma/client cu tipul nostru
+import type { Material, MaterialType } from "@/app/types/material";
 
 interface PostMaterialsProps {
-    post: { content?: string };
-    materials: Material[];
+  post: { content?: string };
+  materials: Material[];
 }
 
 interface PreviewData {
@@ -27,7 +29,7 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
 
   useEffect(() => {
     materials.forEach((m) => {
-      if (m.type === MaterialType.YOUTUBE && m.url) {
+      if (m.type === "YOUTUBE" && m.url) {
         const vid = extractYouTubeId(m.url);
         if (!vid) return;
         fetch(`/api/youtube-title?id=${vid}`)
@@ -36,17 +38,18 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
             if (data.title) setYtTitles((p) => ({ ...p, [m.id]: data.title }));
           });
       }
-      if (m.type === MaterialType.LINK && m.url) {
+      if (m.type === "LINK" && m.url) {
         fetch(`/api/get-title?url=${encodeURIComponent(m.url)}`)
           .then((r) => r.json())
           .then((data) => {
-            if (data.title) setLinkPreviews((p) => ({
-              ...p,
-              [m.id]: { title: data.title, image: data.image }
-            }));
+            if (data.title)
+              setLinkPreviews((p) => ({
+                ...p,
+                [m.id]: { title: data.title, image: data.image },
+              }));
           });
       }
-      if (m.type === MaterialType.FILE && m.filePath) {
+      if (m.type === "FILE" && m.filePath) {
         const ext = m.filePath.split(".").pop()?.toLowerCase();
         if (["txt", "md", "doc", "docx"].includes(ext || "")) {
           fetch(m.filePath)
@@ -60,7 +63,8 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
 
   const renderThumb = (m: Material) => {
     const base = "w-24 h-16 object-cover flex-shrink-0";
-    if (m.type === MaterialType.YOUTUBE && m.url) {
+
+    if (m.type === "YOUTUBE" && m.url) {
       const vid = extractYouTubeId(m.url);
       return vid ? (
         <Image
@@ -74,7 +78,8 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         />
       ) : null;
     }
-    if (m.type === MaterialType.LINK) {
+
+    if (m.type === "LINK") {
       const prev = linkPreviews[m.id];
       return prev?.image ? (
         <Image
@@ -88,7 +93,10 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         />
       ) : (
         <div
-          className={base + " bg-gray-200 rounded-l-xl flex items-center justify-center text-2xl"}
+          className={
+            base +
+            " bg-gray-200 rounded-l-xl flex items-center justify-center text-2xl"
+          }
           onClick={() => setSelected(m)}
           style={{ cursor: "pointer" }}
         >
@@ -96,7 +104,8 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         </div>
       );
     }
-    if (m.type === MaterialType.FILE && m.filePath) {
+
+    if (m.type === "FILE" && m.filePath) {
       const ext = m.filePath.split(".").pop()?.toLowerCase();
       if (["jpg", "jpeg", "png", "gif"].includes(ext || "")) {
         return (
@@ -133,7 +142,10 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
       if (["txt", "md"].includes(ext || "")) {
         return (
           <div
-            className={base + " bg-yellow-100 rounded-l-xl flex items-center justify-center"}
+            className={
+              base +
+              " bg-yellow-100 rounded-l-xl flex items-center justify-center"
+            }
             onClick={() => setSelected(m)}
             style={{ cursor: "pointer" }}
           >
@@ -141,7 +153,7 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
           </div>
         );
       }
-      if (["doc","docx"].includes(ext || "")) {
+      if (["doc", "docx"].includes(ext || "")) {
         return (
           <iframe
             src={m.filePath}
@@ -160,9 +172,13 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         </div>
       );
     }
+
     return (
       <div
-        className={base + " bg-gray-200 rounded-l-xl flex items-center justify-center text-2xl"}
+        className={
+          base +
+          " bg-gray-200 rounded-l-xl flex items-center justify-center text-2xl"
+        }
         onClick={() => setSelected(m)}
         style={{ cursor: "pointer" }}
       >
@@ -172,17 +188,17 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
   };
 
   const getLabel = (m: Material) => {
-    if (m.type === MaterialType.YOUTUBE) return "Videoclip YouTube";
-    if (m.type === MaterialType.LINK)    return m.url!;
-    if (m.type === MaterialType.FILE && m.filePath) {
+    if (m.type === "YOUTUBE") return "Videoclip YouTube";
+    if (m.type === "LINK") return m.url!;
+    if (m.type === "FILE" && m.filePath) {
       const ext = m.filePath.split(".").pop()?.toLowerCase();
-      if (["jpg","jpeg","png","gif"].includes(ext||"")) return "Imagine";
-      if (ext === "pdf")   return "PDF";
-      if (["txt","md"].includes(ext||""))  return "Text";
-      if (["doc","docx"].includes(ext||""))return "Document";
+      if (["jpg", "jpeg", "png", "gif"].includes(ext || "")) return "Imagine";
+      if (ext === "pdf") return "PDF";
+      if (["txt", "md"].includes(ext || "")) return "Text";
+      if (["doc", "docx"].includes(ext || "")) return "Document";
       return "Fișier";
     }
-    if (m.type === MaterialType.DRIVE)    return "Google Drive";
+    if (m.type === "DRIVE") return "Google Drive";
     return "";
   };
 
@@ -191,16 +207,18 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
     const { filePath, url, type, id } = selected;
     const ext = filePath?.split(".").pop()?.toLowerCase();
 
-    if (type === MaterialType.YOUTUBE && url) {
+    if (type === "YOUTUBE" && url) {
       return (
         <iframe
           className="w-full h-full"
-          src={`https://www.youtube.com/embed/${extractYouTubeId(url)}?autoplay=1`}
+          src={`https://www.youtube.com/embed/${extractYouTubeId(
+            url
+          )}?autoplay=1`}
           allow="autoplay; encrypted-media"
         />
       );
     }
-    if (type === MaterialType.LINK && linkPreviews[id]?.image) {
+    if (type === "LINK" && linkPreviews[id]?.image) {
       return (
         <Image
           src={linkPreviews[id]!.image!}
@@ -211,21 +229,21 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         />
       );
     }
-    if (type === MaterialType.LINK && url) {
+    if (type === "LINK" && url) {
       return <iframe className="w-full h-full" src={url} />;
     }
-    if (type === MaterialType.FILE && filePath) {
+    if (type === "FILE" && filePath) {
       if (ext === "pdf") {
         return <iframe src={filePath} className="w-full h-full" />;
       }
-      if (["txt","md"].includes(ext||"")) {
+      if (["txt", "md"].includes(ext || "")) {
         return (
           <pre className="whitespace-pre-wrap overflow-auto p-4">
             {textPreviews[id] ?? "Încărcare..."}
           </pre>
         );
       }
-      if (["jpg","jpeg","png","gif"].includes(ext||"")) {
+      if (["jpg", "jpeg", "png", "gif"].includes(ext || "")) {
         return (
           <Image
             src={filePath}
@@ -258,14 +276,16 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
               {renderThumb(m)}
               <div className="flex flex-col justify-center px-4 py-2 overflow-hidden w-full">
                 <a
-                  href={m.type === MaterialType.FILE ? m.filePath ?? undefined : m.url ?? undefined}
+                  href={
+                    m.type === "FILE" ? m.filePath ?? undefined : m.url ?? undefined
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-800 font-medium hover:text-blue-600 truncate whitespace-nowrap overflow-hidden"
                 >
-                  {m.type === MaterialType.YOUTUBE
+                  {m.type === "YOUTUBE"
                     ? ytTitles[m.id] ?? m.title
-                    : m.type === MaterialType.LINK
+                    : m.type === "LINK"
                     ? linkPreviews[m.id]?.title ?? m.title
                     : m.title}
                 </a>
@@ -277,6 +297,7 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
           ))}
         </div>
       </div>
+
       {selected && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-11/12 md:w-3/4 lg:w-1/2 h-3/4 relative flex flex-col">
@@ -287,7 +308,9 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
               &times;
             </button>
             <a
-              href={selected.type === MaterialType.FILE ? selected.filePath! : selected.url!}
+              href={
+                selected.type === "FILE" ? selected.filePath! : selected.url!
+              }
               download
               className="absolute top-2 right-2 bg-blue-600 text-white rounded px-3 py-1 text-sm"
             >
