@@ -1,12 +1,19 @@
 "use client";
 
-import { Classroom } from "@prisma/client";
 import { Pencil, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate } from "swr";
-import { ConfirmModal } from "../../../../../../../components/confirm-modal";
+import { ConfirmModal } from "@/components/confirm-modal";
+
+// în loc de `import { Classroom } from "@prisma/client";`
+import type { Classroom } from "@/app/types/classroom";
+
+interface CourseCardProps {
+  course: Classroom;
+  currentUserId: string;
+}
 
 const bgGradients = [
   "bg-gradient-to-br from-slate-700 to-gray-800",
@@ -16,11 +23,6 @@ const bgGradients = [
   "bg-gradient-to-br from-neutral-700 to-zinc-800",
   "bg-gradient-to-br from-purple-700 to-gray-800",
 ];
-
-interface CourseCardProps {
-  course: Classroom;
-  currentUserId: string; // 👈 Adăugat
-}
 
 export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
   const router = useRouter();
@@ -33,14 +35,14 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
     return bgGradients[hash % bgGradients.length];
   });
 
+  const isOwner = currentUserId === course.userId;
+
   const goToCourse = () => {
     const destination = isOwner
       ? `/teacher/courses/${course.id}`
       : `/student/courses/${course.id}`;
     router.push(destination);
   };
-  
-  
 
   const onEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -54,7 +56,9 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
 
   const handleConfirmDelete = async () => {
     try {
-      const res = await fetch(`/api/courses/${course.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/courses/${course.id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Eroare la ștergere");
       setShowConfirm(false);
       await mutate("/api/courses");
@@ -63,8 +67,6 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
       alert("A apărut o eroare la ștergere.");
     }
   };
-
-  const isOwner = currentUserId === course.userId;
 
   return (
     <>
@@ -80,11 +82,13 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
       >
         <div className={cn("p-4 text-slate-100", bgGradient)}>
           <h2 className="text-xl font-semibold leading-snug">{course.name}</h2>
-          <p className="text-sm opacity-90 mt-1">{course.section || "Fără descriere"}</p>
+          <p className="text-sm opacity-90 mt-1">
+            {course.section ?? "Fără descriere"}
+          </p>
         </div>
 
         <div className="p-4 bg-white flex flex-col gap-2">
-          {isOwner && ( // 👈 Doar dacă e creatorul
+          {isOwner && (
             <div
               className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition"
               onClick={(e) => e.stopPropagation()}
@@ -109,7 +113,7 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
         </div>
       </div>
 
-      {isOwner && ( // 👈 ConfirmModal doar pentru creator
+      {isOwner && (
         <ConfirmModal
           isOpen={showConfirm}
           onCancel={() => setShowConfirm(false)}
