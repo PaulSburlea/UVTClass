@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse }    from "next/server";
 import { db }                          from "@/lib/db";
-import { GradeCategory }     from "@prisma/client";
+import { GradeCategory } from "@/app/types/grade";
 import { auth, clerkClient }           from "@clerk/nextjs/server";
 import { sendMail }                    from "@/lib/mailer";
 

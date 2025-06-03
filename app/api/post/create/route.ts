@@ -1,13 +1,13 @@
 // frontend/app/api/post/create/route.ts
 
-import { NextResponse }             from "next/server";
-import { auth, clerkClient }        from "@clerk/nextjs/server";
-import { db }                       from "@/lib/db";
-import { writeFile }                from "fs/promises";
-import path                         from "path";
-import { v4 as uuidv4 }             from "uuid";
-import { MaterialType, UserRole }   from "@prisma/client";
-import { sendMail }                 from "@/lib/mailer";
+import { NextResponse }      from "next/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { db }                from "@/lib/db";
+import { writeFile }         from "fs/promises";
+import path                  from "path";
+import { v4 as uuidv4 }      from "uuid";
+import type { MaterialType } from "@/app/types/material";
+import { sendMail }          from "@/lib/mailer";
 
 export async function POST(req: Request) {
   // ————————————————— existing logic —————————————————
@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     return new NextResponse("Missing required data", { status: 400 });
   }
 
+  // Creăm postarea
   const post = await db.post.create({
     data: {
       authorId:    userId,
@@ -37,25 +38,30 @@ export async function POST(req: Request) {
     },
   });
 
-  const links = formData.getAll("links") as string[];
-  const types = formData.getAll("types") as string[];
+  // Procesăm link-urile cu material extern (YOUTUBE, DRIVE, LINK etc.)
+  const links = formData.getAll("links") as string[];   // array de URL-uri
+  const types = formData.getAll("types") as string[];   // array de string-uri "YOUTUBE" | "DRIVE" | "LINK" etc.
 
   for (let i = 0; i < links.length; i++) {
     const url     = links[i];
-    const typeKey = types[i] as keyof typeof MaterialType;
-    const type    = MaterialType[typeKey] ?? MaterialType.LINK;
+    let typeStr   = types[i] as MaterialType;
+    // Validăm că acel string e unul din valorile permise; altfel fallback la "LINK"
+    if (!["FILE", "YOUTUBE", "DRIVE", "LINK"].includes(typeStr)) {
+      typeStr = "LINK";
+    }
 
     await db.material.create({
       data: {
         title:  "Material extern",
         name:   url,
-        type,
+        type:   typeStr,  // string: "YOUTUBE" | "DRIVE" | "LINK" etc.
         url,
         postId: post.id,
       },
     });
   }
 
+  // Procesăm fișierele încărcate (tipul va fi întotdeauna "FILE")
   const files = formData.getAll("files") as File[];
   for (const file of files) {
     const buffer     = Buffer.from(await file.arrayBuffer());
@@ -69,7 +75,7 @@ export async function POST(req: Request) {
       data: {
         name:     file.name,
         title:    file.name,
-        type:     MaterialType.FILE,
+        type:     "FILE",                     // întotdeauna FILE
         filePath: `/uploads/${fileName}`,
         postId:   post.id,
       },
@@ -78,14 +84,11 @@ export async function POST(req: Request) {
   // ——————————————————————————————————————————————
 
   // ————————— email notification logic ——————————
-// … (toate importurile şi logica de salvare de mai sus rămân neschimbate) …
-
-  // ————————— email notification logic ——————————
-  // 1. Preluăm studenții înscriși
+  // 1. Preluăm studenții înscriși (folosim literal "STUDENT" în loc de UserRole.STUDENT)
   const enrollments = await db.userClassroom.findMany({
     where: {
       classroomId: courseId,
-      role:        UserRole.STUDENT,
+      role:        "STUDENT", 
     },
     select: { userId: true },
   });
@@ -108,7 +111,7 @@ export async function POST(req: Request) {
 
     return sendMail({
       to,
-      subject: `${userName} a adăugat un material nou la cursul tău`,  // ← aici
+      subject: `${userName} a adăugat un material nou la cursul tău`,
       html:    `
         <p>Bună, ${name},</p>
         <p><strong>${userName}</strong> a adăugat un material nou la curs: <strong>${title}</strong>.</p>

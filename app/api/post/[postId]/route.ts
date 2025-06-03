@@ -1,17 +1,15 @@
-// frontend/app/api/post/[postId]/route.ts
-
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { writeFile } from "fs/promises";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import { MaterialType } from "@prisma/client";
+
+import type { MaterialType } from "@/app/types/material"; // ajustează calea dacă e alta
 
 async function requireEnrollment(postId: string, userId: string) {
   const post = await db.post.findUnique({ where: { id: postId } });
   if (!post) return false;
-  // orice rol (TEACHER sau STUDENT) permite GET
   const e = await db.userClassroom.findFirst({
     where: { classroomId: post.classroomId, userId },
   });
@@ -21,7 +19,6 @@ async function requireEnrollment(postId: string, userId: string) {
 async function requireTeacher(postId: string, userId: string) {
   const post = await db.post.findUnique({ where: { id: postId } });
   if (!post) return false;
-  // doar TEACHER poate modifica/șterge
   const e = await db.userClassroom.findFirst({
     where: {
       classroomId: post.classroomId,
@@ -73,28 +70,45 @@ export async function PUT(
   const content = formData.get("content")?.toString() ?? null;
   if (!title) return new NextResponse("Titlul este obligatoriu", { status: 400 });
 
+  // Extragem lista de ID-uri de materiale care au fost șterse în frontend
   const removedIds = formData.getAll("removedIds").map((id) => id.toString());
 
   try {
+    // Șterg materialele eliminate
     if (removedIds.length) {
       await db.material.deleteMany({ where: { id: { in: removedIds } } });
     }
+
+    // Actualizez postarea în baza de date
     const updatedPost = await db.post.update({
       where: { id: postId },
       data: { title, content, editedAt: new Date() },
     });
 
-    const links = formData.getAll("links") as string[];
-    const types = formData.getAll("types") as string[];
+    // Procesăm link-urile (YOUTUBE, DRIVE, LINK)
+    const links = formData.getAll("links") as string[];   // fiecare element este un URL (string)
+    const types = formData.getAll("types") as string[];   // fiecare element este un string: "YOUTUBE" | "DRIVE" | "LINK" etc.
+
     for (let i = 0; i < links.length; i++) {
       const url = links[i];
-      const typeStr = types[i] as keyof typeof MaterialType;
-      const type = MaterialType[typeStr] || MaterialType.LINK;
+      let typeStr = types[i] as MaterialType;
+      // Dacă typeStr nu corespunde niciunuia dintre valorile așteptate, fallback la "LINK"
+      if (!["FILE", "YOUTUBE", "DRIVE", "LINK"].includes(typeStr)) {
+        typeStr = "LINK";
+      }
+      // Creăm materialul în baza de date
       await db.material.create({
-        data: { title: "Material extern", name: url, type, url, postId },
+        data: {
+          title: "Material extern",
+          name: url,
+          type: typeStr,    // tipul vine ca string: "YOUTUBE" | "DRIVE" | "LINK"
+          url,
+          postId,
+        },
       });
     }
 
+    // Procesăm fișierele încărcate
     const files = formData.getAll("files") as Blob[];
     for (const blob of files) {
       const file = blob as File;
@@ -103,16 +117,19 @@ export async function PUT(
       const fileName = `${uuidv4()}${ext}`;
       const uploadPath = path.join(process.cwd(), "public", "uploads", fileName);
       await writeFile(uploadPath, buffer);
+
+      // Creăm materialul de tip FILE în baza de date
       await db.material.create({
         data: {
           name: file.name,
           title: file.name,
-          type: MaterialType.FILE,
+          type: "FILE", // aici e întotdeauna "FILE"
           filePath: `/uploads/${fileName}`,
           postId,
         },
       });
     }
+
     return NextResponse.json(updatedPost);
   } catch (err) {
     console.error("Eroare la actualizarea postării:", err);
