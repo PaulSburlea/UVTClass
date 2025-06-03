@@ -1,11 +1,11 @@
 // frontend/app/api/admin/teachers/route.ts
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { db }                from "@/lib/db";
+import { NextResponse }      from "next/server";
 
 export async function GET() {
-  // 1. authorize
+  // 1. Verificăm autentificarea și rolul de admin
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,22 +15,30 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // 2. preluăm toți profesorii (TS îi vede ca { userId: string }[])
+  // 2. Preluăm toți profesorii din baza de date
   const teachers = await db.teacher.findMany({
     select: { userId: true },
   });
 
-  // 3. build răspuns „enhanced”
+  // 3. Construim răspunsul „enhanced” cu informații din Clerk și cursuri
   const enhanced = await Promise.all(
     teachers.map(async (t: { userId: string }) => {
-      // 3a. info Clerk
+      // 3a. Obținem clientul Clerk
       const client = await clerkClient();
-      const user = await client.users.getUser(t.userId);
-      const name =
-        [user.firstName, user.lastName].filter(Boolean).join(" ") || "N/A";
-      const email = user.emailAddresses?.[0]?.emailAddress || "N/A";
 
-      // 3b. cursurile pe care le-a creat (model Classroom.userId)
+      // 3b. Încercăm să luăm datele de la Clerk; dacă nu există, capturăm eroarea
+      let name = "N/A";
+      let email = "N/A";
+      try {
+        const user = await client.users.getUser(t.userId);
+        name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "N/A";
+        email = user.emailAddresses?.[0]?.emailAddress || "N/A";
+      } catch (err: any) {
+        // Dacă Clerk răspunde cu 404 pentru acest userId, pur și simplu îl ocolim:
+        console.warn(`Clerk getUser(${t.userId}) a dat 404, ignorăm acest userId.`);
+      }
+
+      // 3c. Preluăm lista de nume ale cursurilor pe care le-a creat profesorul
       const courses = await db.classroom.findMany({
         where: { userId: t.userId },
         select: { name: true },
