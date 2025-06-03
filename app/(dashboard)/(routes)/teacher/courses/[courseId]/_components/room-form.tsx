@@ -9,7 +9,7 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Classroom } from "@prisma/client";
+import type { Classroom } from "@/app/types/classroom";
 
 import {
   Form,
