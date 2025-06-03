@@ -1,7 +1,7 @@
 // app/api/student/courses/route.ts
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
+import { db }           from "@/lib/db";
+import { auth }         from "@clerk/nextjs/server";
 
 export async function GET() {
   const { userId } = await auth();
@@ -25,22 +25,24 @@ export async function GET() {
     },
   });
 
-  // Formăm lista de cursuri
+  // Formăm lista de cursuri, tipând parametrul cu typeof enrollments[number]
   const courses = await Promise.all(
-    enrollments.map(async (enr) => {
-      const cls = enr.classroom;
-      // Dacă vrei numele profesorului, îl poți prelua din tabela Teacher sau User
-      // aici pur și simplu vom afișa un placeholder:
-      const teacherName = "—"; 
+    enrollments.map(
+      async (enr: typeof enrollments[number]) => {
+        const cls = enr.classroom;
+        // Dacă vrei numele profesorului, îl poți prelua din tabela Teacher sau User
+        // aici pur și simplu vom afișa un placeholder:
+        const teacherName = "—";
 
-      return {
-        id: cls.id,
-        name: cls.name,
-        section: cls.section,
-        code: cls.code,
-        teacherName,
-      };
-    })
+        return {
+          id:          cls.id,
+          name:        cls.name,
+          section:     cls.section,
+          code:        cls.code,
+          teacherName,
+        };
+      }
+    )
   );
 
   return NextResponse.json(courses);
