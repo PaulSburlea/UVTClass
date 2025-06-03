@@ -1,6 +1,6 @@
 "use client";
 
-import { Classroom } from "@prisma/client";
+import type { Classroom } from "@/app/types/classroom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Info } from "lucide-react";

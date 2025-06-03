@@ -3,7 +3,7 @@
 
 import useSWR from "swr";
 import { CourseCard } from "./course-card";
-import { Classroom } from "@prisma/client";
+import type { Classroom } from "@/app/types/classroom";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
