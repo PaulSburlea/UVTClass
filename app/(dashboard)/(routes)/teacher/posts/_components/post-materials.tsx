@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
 // Înlocuim importul din @prisma/client cu tipul nostru
-import type { Material, MaterialType } from "@/app/types/material";
+import type { Material } from "@/app/types/material";
 
 interface PostMaterialsProps {
   post: { content?: string };
