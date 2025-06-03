@@ -1,21 +1,24 @@
-// frontend/app/api/enrolled-courses/route.ts
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type { Classroom } from "@/app/types/classroom";
+import type { UserClassroom } from "@/app/types/userClassroom";
+
 
 export async function GET() {
   try {
     const { userId } = await auth();
     if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
-    // Găsim toate legăturile user–curs
     const rels = await db.userClassroom.findMany({
       where: { userId },
       include: { classroom: true },
       orderBy: { createdAt: "desc" },
     });
 
-    const courses = rels.map((r: any) => r.classroom);
+    const courses = rels.map(
+      (r: UserClassroom & { classroom: Classroom }) => r.classroom
+    );
 
     return NextResponse.json(courses);
   } catch (err) {
