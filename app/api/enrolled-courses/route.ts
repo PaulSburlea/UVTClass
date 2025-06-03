@@ -15,8 +15,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Extragem doar obiectele Classroom
-    const courses = rels.map(r => r.classroom);
+    const courses = rels.map((r: any) => r.classroom);
 
     return NextResponse.json(courses);
   } catch (err) {
