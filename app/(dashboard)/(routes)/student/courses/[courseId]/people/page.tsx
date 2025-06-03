@@ -3,7 +3,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ClassroomPeople } from "@/app/(dashboard)/(routes)/teacher/courses/[courseId]/people/_components/people";
 import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
-import type { UserClassroom } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 interface Person {
   id: string;
@@ -22,10 +22,12 @@ export default async function StudentCoursePeoplePage(props: PageProps) {
   const { userId } = await auth();
   if (!userId) return redirect("/");
 
+  // doar studenții înscriși pot intra
   const enr = await db.userClassroom.findFirst({
     where: { classroomId: courseId, userId, role: "STUDENT" },
   });
   if (!enr) {
+    // dacă nu e student, redirecționăm la profesor
     return redirect(`/teacher/courses/${courseId}/people`);
   }
 
@@ -35,8 +37,14 @@ export default async function StudentCoursePeoplePage(props: PageProps) {
   });
   if (!classroom) return redirect("/student");
 
+  // Definim un alias de tip pentru fiecare element din classroom.users
+  type UC = Prisma.ClassroomGetPayload<{
+    include: { users: true };
+  }>["users"][number];
+
+  // obținem profesorul (uc e acum tip strict, nu any)
   const teacherEntry = classroom.users.find(
-    (u: UserClassroom) => u.role === "TEACHER"
+    (u: UC) => u.role === "TEACHER"
   )!;
 
   const res = await clerkClient();
@@ -49,9 +57,10 @@ export default async function StudentCoursePeoplePage(props: PageProps) {
     email: prof.emailAddresses?.[0]?.emailAddress ?? undefined,
   };
 
+  // filtrăm studenții (tot u e de tip UC)
   const studentIds = classroom.users
-    .filter((u: UserClassroom) => u.role === "STUDENT")
-    .map((u: UserClassroom) => u.userId);
+    .filter((u: UC) => u.role === "STUDENT")
+    .map((u: UC) => u.userId);
 
   const list = await res.users.getUserList({ userId: studentIds });
   const students: Person[] = list.data.map((u) => ({
@@ -70,7 +79,7 @@ export default async function StudentCoursePeoplePage(props: PageProps) {
           teacher={teacher}
           students={students}
           courseId={courseId}
-          canRemove={false}
+          canRemove={false} // student nu poate elimina
         />
       </div>
     </>
