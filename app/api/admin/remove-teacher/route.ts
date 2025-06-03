@@ -26,7 +26,8 @@ export async function DELETE(req: Request) {
         where: { userId: teacherId },
         select: { id: true },
       });
-      const classroomIds = classrooms.map((c) => c.id);
+      // Specificăm tipul obiectului din array: { id: string }
+      const classroomIds = classrooms.map((c: { id: string }) => c.id);
 
       if (classroomIds.length > 0) {
         // 2) Pentru fiecare classroom, găsește toate post-urile
@@ -34,7 +35,7 @@ export async function DELETE(req: Request) {
           where: { classroomId: { in: classroomIds } },
           select: { id: true },
         });
-        const postIds = posts.map((p) => p.id);
+        const postIds = posts.map((p: { id: string }) => p.id);
 
         if (postIds.length > 0) {
           // 3) Șterge întâi toate reply-urile comentariilor (parentCommentId != null)
