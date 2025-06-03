@@ -1,12 +1,12 @@
 // app/api/courses/[courseId]/route.ts
 
-import { NextResponse } from "next/server"; 
+import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
 export async function PATCH(
-  req: Request,
-  { params }: { params: { courseId: string } }
+  request: Request,
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -14,8 +14,9 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { courseId } = params;
-    const values = await req.json();
+    // „params” e un Promise, de aceea folosim await:
+    const { courseId } = await params;
+    const values = await request.json();
 
     const course = await db.classroom.update({
       where: {
@@ -35,8 +36,8 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
-  { params }: { params: { courseId: string } }
+  _request: Request,
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -44,7 +45,8 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { courseId } = params;
+    // Aşteptăm params ca să extragem courseId
+    const { courseId } = await params;
     const course = await db.classroom.delete({
       where: {
         id: courseId,
