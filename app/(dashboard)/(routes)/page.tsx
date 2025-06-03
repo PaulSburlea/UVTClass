@@ -1,4 +1,5 @@
-'use client';
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 
 import { getEnrolledCourses } from "@/lib/get-enrolled-courses";
 import { CourseCard } from "./teacher/courses/[courseId]/_components/course-card";
