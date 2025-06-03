@@ -6,6 +6,9 @@ import { currentUser } from "@clerk/nextjs/server";
 import { CommentSection } from "./_components/comment-section";
 import { PostMaterials } from "../../../../posts/_components/post-materials";
 
+// importă tipul custom de la tine
+import type { Material } from "@/app/types/material";
+
 interface Props {
   params: Promise<{
     courseId: string;
@@ -24,13 +27,13 @@ export default async function PostDetailsPage({ params }: Props) {
     where: {
       classroomId: courseId,
       userId: user?.id,
-      role: "TEACHER"
+      role: "TEACHER",
     },
   });
 
   if (!enrollment) {
     // Dacă studentul nu este înscris, redirecționează-l către pagina principală a cursurilor
-    return notFound(); 
+    return notFound();
   }
 
   const post = await db.post.findUnique({
@@ -65,7 +68,8 @@ export default async function PostDetailsPage({ params }: Props) {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
-                  })})
+                  })}
+                  )
                 </span>
               )}
             </p>
@@ -78,10 +82,11 @@ export default async function PostDetailsPage({ params }: Props) {
           postId={postId}
           postTitle={post.title}
           postContent={post.content ?? ""}
-          postMaterials={post.materials.map((material) => ({
+          // marchează material ca fiind tipul tău
+          postMaterials={post.materials.map((material: Material) => ({
             id: material.id,
             title: material.title,
-            type: material.type as string,
+            type: material.type,
             filePath: material.filePath ?? undefined,
             url: material.url ?? undefined,
           }))}
@@ -89,10 +94,18 @@ export default async function PostDetailsPage({ params }: Props) {
       </div>
 
       {/* Conținut și Materiale */}
-      <PostMaterials post={{ ...post, content: post.content ?? undefined }} materials={post.materials} />
+      <PostMaterials
+        post={{ ...post, content: post.content ?? undefined }}
+        materials={post.materials}
+      />
 
       {/* Lista de comentarii */}
-      <CommentSection avatarUrl={avatarUrl} postId={postId} postAuthorId={postAuthorId} classroomId={courseId}/>
+      <CommentSection
+        avatarUrl={avatarUrl}
+        postId={postId}
+        postAuthorId={postAuthorId}
+        classroomId={courseId}
+      />
     </div>
   );
 }
