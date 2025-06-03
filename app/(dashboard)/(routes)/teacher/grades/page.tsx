@@ -9,10 +9,12 @@ export default async function TeacherGradesPage() {
   const { userId } = await auth();
   if (!userId) return null;
 
-  const courses = await db.classroom.findMany({
-    where: { users: { some: { userId, role: "TEACHER" } } },
-    select: { id: true, name: true, code: true },
-  });
+  // Implicităm forma obiectelor prin adăugarea unui tip
+  const courses: { id: string; name: string; code: string }[] =
+    await db.classroom.findMany({
+      where: { users: { some: { userId, role: "TEACHER" } } },
+      select: { id: true, name: true, code: true },
+    });
 
   return (
     <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
