@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { mutate } from "swr";
 import { ConfirmModal } from "@/components/confirm-modal";
 
-// în loc de `import { Classroom } from "@prisma/client";`
 import type { Classroom } from "@/app/types/classroom";
 
 interface CourseCardProps {

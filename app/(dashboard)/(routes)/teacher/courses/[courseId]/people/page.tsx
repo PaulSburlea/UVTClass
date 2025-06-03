@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 import { ClassroomPeople } from "./_components/people";
 import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
 
+// importă tipurile tale custom, nu `@prisma/client`
+import type { UserClassroom } from "@/app/types/userClassroom";
+
 interface Person {
   id: string;
   firstName?: string;
@@ -25,21 +28,23 @@ const CoursePeoplePage = async ({ params }: CoursePeoplePageProps) => {
 
   const classroom = await db.classroom.findUnique({
     where: { id: courseId },
-    include: { users: true },
+    include: { users: true }, // Prisma îți returnează `users: UserClassroom[]`
   });
 
   if (!classroom) return redirect("/");
 
   // doar profesorii pot intra aici
-  const isTeacher = classroom.users.some(
-    (u) => u.userId === userId && u.role === "TEACHER"
+  const isTeacher = classroom.users.some((u: UserClassroom) =>
+    u.userId === userId && u.role === "TEACHER"
   );
   if (!isTeacher) {
     return redirect(`/student/courses/${courseId}/people`);
   }
 
-  // extragem profesorul
-  const teacherEntry = classroom.users.find((u) => u.role === "TEACHER");
+  // extragem intrarea profesorului
+  const teacherEntry = classroom.users.find(
+    (u: UserClassroom) => u.role === "TEACHER"
+  );
   if (!teacherEntry) return redirect("/");
 
   const client = await clerkClient();
@@ -53,9 +58,10 @@ const CoursePeoplePage = async ({ params }: CoursePeoplePageProps) => {
     email: prof.emailAddresses?.[0]?.emailAddress ?? undefined,
   };
 
+  // Luăm doar studenții (filtrăm prin UserClassroom.role)
   const studentIds: string[] = classroom.users
-    .filter((u) => u.role === "STUDENT")
-    .map((u) => u.userId);
+    .filter((u: UserClassroom) => u.role === "STUDENT")
+    .map((u: UserClassroom) => u.userId);
 
   const studentUsers = await Promise.all(
     studentIds.map((id: string) => client.users.getUser(id))
