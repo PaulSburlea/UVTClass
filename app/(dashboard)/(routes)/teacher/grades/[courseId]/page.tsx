@@ -1,5 +1,3 @@
-// frontend/app/(dashboard)/(routes)/teacher/grades/[courseId]/page.tsx
-
 import { auth, clerkClient, type User } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import StudentsSearchList from "./_components/students-search-list";
@@ -21,7 +19,7 @@ export default async function CourseStudentsPage(props: ServerProps) {
   });
   if (!membership || membership.role !== "TEACHER") return null;
 
-  // luăm studenții înscriși
+  // luăm studenții înscriși (TS află că rezultatul are forma { userId: string }[])
   const studentEntries = await db.userClassroom.findMany({
     where: { classroomId: courseId, role: "STUDENT" },
     select: { userId: true },
@@ -30,9 +28,9 @@ export default async function CourseStudentsPage(props: ServerProps) {
   // instanțiem Clerk client
   const client = await clerkClient();
 
-  // mapăm la date studenți
+  // tipăm expliciti parametrul { userId } ca fiind string
   const students: { id: string; name: string }[] = await Promise.all(
-    studentEntries.map(async ({ userId }) => {
+    studentEntries.map(async ({ userId }: { userId: string }) => {
       const u: User = await client.users.getUser(userId);
       return {
         id: u.id,
