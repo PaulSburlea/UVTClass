@@ -1,13 +1,5 @@
 import { NextResponse } from "next/server";
 import { db }           from "@/lib/db";
-import type { Prisma }  from "@prisma/client";
-
-type PostWithCount = Prisma.PostGetPayload<{
-  include: {
-    materials: true;
-    _count: { select: { comments: true } };
-  };
-}>;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -17,18 +9,18 @@ export async function GET(req: Request) {
   }
 
   try {
-    // 1) Aduce postările, incluzând 'materials' și '_count.comments'
-    const postsWithCount: PostWithCount[] = await db.post.findMany({
+    // 1) Aduce postările cu materials și _count.comments
+    const postsWithCount = await db.post.findMany({
       where: { classroomId: courseId },
       include: {
         materials: true,
-        _count: { select: { comments: true } },
+        _count:    { select: { comments: true } },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    // 2) Map-uim: extragem '_count' și adăugăm 'commentCount'
-    const posts = postsWithCount.map((p) => {
+    // 2) Map-uim la forma dorită, dar tipăm parametrul cu `typeof postsWithCount[number]`
+    const posts = postsWithCount.map((p: typeof postsWithCount[number]) => {
       const { _count, ...rest } = p;
       return {
         ...rest,
@@ -36,7 +28,7 @@ export async function GET(req: Request) {
       };
     });
 
-    // 3) Returnăm JSON
+    // 3) Returnăm JSON-ul
     return NextResponse.json(posts);
   } catch (err) {
     console.error("Eroare la preluarea postărilor:", err);
