@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getEnrolledCourses } from "@/lib/get-enrolled-courses";
 import { CourseCard } from "./teacher/courses/[courseId]/_components/course-card";
 import { auth } from "@clerk/nextjs/server";
