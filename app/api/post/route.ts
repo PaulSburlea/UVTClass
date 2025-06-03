@@ -19,8 +19,8 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    // 2) map‑uim la forma dorită: extragem _count şi punem commentCount
-    const posts = postsWithCount.map(p => {
+    // 2) map-uim la forma dorită: extragem _count şi punem commentCount
+    const posts = postsWithCount.map((p: any) => {
       const { _count, ...rest } = p;
       return {
         ...rest,
