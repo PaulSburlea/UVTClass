@@ -227,8 +227,9 @@ export function EditPostModal({
     removedIds.forEach((id) => form.append("removedIds", id));
 
     filesPreview.forEach((f) => {
+      const hasId = (f as ExternalFile).__id !== undefined && (f as ExternalFile).__id !== null;
       const isExt = isExternalFile(f);
-      const hasId = isExt && f.__id ? true : false;
+
       if (isExt) {
         if (!hasId) {
           form.append("links", f.__url);
