@@ -1,51 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider     = "mysql"
   url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model Classroom {
-  id         String    @id @default(uuid())
-  userId     String
-  teacher    Teacher   @relation(fields: [userId], references: [userId], onDelete: Cascade)
-
-  name       String    @db.Text
-  section    String?
-  subject    String?
-  room       String?
-  code       String    @unique
-
-  users      UserClassroom[]
-  posts      Post[]
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id        String          @id @default(uuid())
+  name      String          @db.Text
+  section   String?
+  subject   String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  code      String          @unique
+  userId    String
+  room      String?
+  teacher   Teacher         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  users     UserClassroom[]
+  posts     Post[]
 
   @@index([userId])
   @@map("classroom")
 }
 
 model Teacher {
-  userId      String      @id
-  createdAt   DateTime    @default(now())
-  classrooms  Classroom[]
+  userId     String      @id
+  createdAt  DateTime    @default(now())
+  classrooms Classroom[]
 
   @@map("teacher")
 }
 
 model UserClassroom {
-  id           String   @id @default(uuid())
-  classroomId  String
-  userId       String
-  role         UserRole
-
-  classroom    Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-
-  createdAt    DateTime  @default(now())
+  id          String    @id @default(uuid())
+  classroomId String
+  userId      String
+  createdAt   DateTime  @default(now())
+  role        UserRole
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
 
   @@unique([classroomId, userId])
   @@index([userId])
@@ -53,65 +48,55 @@ model UserClassroom {
   @@map("userclassroom")
 }
 
-enum UserRole {
-  TEACHER
-  STUDENT
-}
-
 model Post {
   id          String     @id @default(uuid())
   authorId    String
-  authorName  String?
   classroomId String
-
-  title       String
+  createdAt   DateTime   @default(now())
+  authorName  String?
+  editedAt    DateTime?
   content     String?    @db.Text
-
+  title       String
   classroom   Classroom  @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-
   materials   Material[]
   comments    Comment[]
-
-  createdAt   DateTime   @default(now())
-  editedAt    DateTime?
 
   @@index([classroomId])
   @@map("post")
 }
 
 model Material {
-  id         String      @id @default(uuid())
-  name       String?
-  postId     String?
-  title      String
-  type       MaterialType
-  filePath   String?     @db.Text
-  url        String?     @db.Text
-
-  post       Post?       @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  uploadedAt DateTime    @default(now())
+  id           String       @id @default(uuid())
+  title        String
+  filePath     String?      @db.Text
+  uploadedAt   DateTime     @default(now())
+  type         MaterialType
+  url          String?      @db.Text
+  postId       String?
+  name         String?
+  format       String?      @db.Text
+  publicId     String?      @db.Text
+  resourceType String?      @db.Text
+  fileKey      String?      @db.Text
+  post         Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@map("material")
 }
 
 model Comment {
-  id              String     @id @default(uuid())
+  id              String    @id @default(uuid())
   postId          String
   authorId        String
   authorName      String
-  authorAvatar    String?
-  content         String     @db.Text
+  content         String    @db.Text
   parentCommentId String?
-
-  post            Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  parentComment   Comment?   @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: NoAction,  onUpdate: NoAction)
-  replies         Comment[]  @relation("CommentReplies")
-
-  createdAt       DateTime   @default(now())
-  editedAt        DateTime?  @updatedAt
+  createdAt       DateTime  @default(now())
+  authorAvatar    String?
+  editedAt        DateTime? @updatedAt
+  post            Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentComment   Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies         Comment[] @relation("CommentReplies")
 
   @@index([postId])
   @@index([parentCommentId])
@@ -119,10 +104,33 @@ model Comment {
 }
 
 model Admin {
-  userId    String   @id
   createdAt DateTime @default(now())
+  userId    String   @id
 
   @@map("admin")
+}
+
+model Grade {
+  id        String        @id @default(uuid())
+  courseId  String
+  studentId String
+  category  GradeCategory
+  title     String
+  date      DateTime
+  score     Float
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  weight    Float
+  position  Int
+
+  @@index([courseId])
+  @@index([studentId])
+  @@map("grade")
+}
+
+enum UserRole {
+  TEACHER
+  STUDENT
 }
 
 enum GradeCategory {
@@ -131,24 +139,6 @@ enum GradeCategory {
   PROJECT
   EXAM
   OTHER
-}
-
-model Grade {
-  id        String       @id @default(uuid())
-  courseId  String
-  studentId String
-  category  GradeCategory
-  title     String
-  date      DateTime
-  score     Float
-  weight    Float
-  position  Int
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  @@index([courseId])
-  @@index([studentId])
-  @@map("grade")
 }
 
 enum MaterialType {

@@ -1,4 +1,3 @@
-// frontend/app/(dashboard)/(routes)/teacher/posts/_components/post-list.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,7 +19,7 @@ export function PostList({
   refetchKey,
   onPostUpdated,
   editable = true,
-  userRole,             // role: "TEACHER" | "STUDENT"
+  userRole, // role: "TEACHER" | "STUDENT"
 }: {
   courseId: string;
   refetchKey: number;
@@ -81,9 +80,13 @@ export function PostList({
   };
 
   if (loading)
-    return <p className="mt-4 text-gray-500">Se încarcă...</p>;
+    return <p className="mt-4 text-gray-500 text-center w-full">Se încarcă...</p>;
   if (!posts.length)
-    return <p className="mt-4 text-gray-500">Nu există materiale.</p>;
+    return (
+      <p className="mt-4 text-gray-500 text-center w-full">
+        Nu există materiale.
+      </p>
+    );
 
   return (
     <div className="mt-6 w-full max-w-screen-lg space-y-6">

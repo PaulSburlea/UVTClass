@@ -33,12 +33,8 @@ const formSchema = z.object({
   }),
 });
 
-export const SubjectForm = ({
-  initialData,
-  courseId,
-}: SubjectFormProps) => {
+export const SubjectForm = ({ initialData, courseId }: SubjectFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-
   const toggleEdit = () => setIsEditing((current) => !current);
 
   const router = useRouter();
@@ -64,25 +60,35 @@ export const SubjectForm = ({
   };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="mt-6 border bg-slate-100 rounded-md p-4 sm:p-6">
       <div className="font-medium flex items-center justify-between">
-        Subiectul cursului
-        <Button onClick={toggleEdit} variant="ghost">
+        <span className="text-base sm:text-lg">Subiectul cursului</span>
+        <Button
+          onClick={toggleEdit}
+          variant="ghost"
+          className="flex items-center space-x-1"
+        >
           {isEditing ? (
-            <>Anulează</>
+            <span className="truncate whitespace-nowrap">Anulează</span>
           ) : (
             <>
-              <Pencil className="h-4 w-4 mr-2" />
-              Editează subiectul
+              <Pencil className="h-4 w-4" />
+              <span className="hidden sm:inline truncate whitespace-nowrap">
+                Editează subiectul
+              </span>
+              <span className="inline sm:hidden truncate whitespace-nowrap">
+                Editează
+              </span>
             </>
           )}
         </Button>
       </div>
+
       {!isEditing && (
         <p
           className={cn(
             "text-sm mt-2",
-            !initialData.subject && "text-slate-500 italic"
+            !initialData.subject && "text-slate-500 italic truncate"
           )}
         >
           {initialData.subject || "Fără subiect definit"}
@@ -99,6 +105,7 @@ export const SubjectForm = ({
                 <FormItem>
                   <FormControl>
                     <Input
+                      className="w-full"
                       disabled={isSubmitting}
                       placeholder="Ex: Programare, Logică, Discuții..."
                       {...field}
@@ -108,8 +115,12 @@ export const SubjectForm = ({
                 </FormItem>
               )}
             />
-            <div className="flex items-center gap-x-2">
-              <Button disabled={!isValid || isSubmitting} type="submit">
+            <div className="flex flex-col gap-y-2 sm:flex-row sm:gap-x-2">
+              <Button
+                disabled={!isValid || isSubmitting}
+                type="submit"
+                className="w-full sm:w-auto truncate whitespace-nowrap"
+              >
                 Salvează
               </Button>
             </div>

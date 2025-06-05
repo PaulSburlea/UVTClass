@@ -56,6 +56,7 @@ export const PostActions = ({
 
       if (res.ok) {
         toast.success("Postarea a fost ștearsă.");
+        router.back();
         onDeleted?.();
       } else {
         toast.error("Eroare la ștergerea postării.");

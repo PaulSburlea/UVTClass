@@ -1,11 +1,18 @@
 // app/(dashboard)/(routes)/_components/sidebar-routes.tsx
 "use client";
 
+import React from "react";
 import { useState, useEffect } from "react";
 import useSWR from "swr";
-import { House, GraduationCap, UsersRound, ChevronDown } from "lucide-react";
+import {
+  House,
+  GraduationCap,
+  UsersRound,
+  ChevronDown,
+} from "lucide-react";
 import { SidebarItem } from "./sidebar-item";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 import type { Classroom } from "@/app/types/classroom";
 
@@ -28,22 +35,24 @@ const getColorForCourse = (name: string) => {
 interface SidebarRoutesProps {
   isSidebarOpen: boolean;
   isSidebarHovered: boolean;
+  isInsideSheet?: boolean;
+  closeSheet?: () => void;
 }
 
 export const SidebarRoutes = ({
   isSidebarOpen,
   isSidebarHovered,
+  isInsideSheet = false,
+  closeSheet,
 }: SidebarRoutesProps) => {
   const pathname = usePathname();
   const isTeacherPage = pathname.includes("/teacher");
   const isStudentPage = pathname.includes("/student");
 
-  // SWR pentru cursurile la care predai
   const { data: teachingCourses = [] } = useSWR<Classroom[]>(
     isTeacherPage ? "/api/courses" : null,
     fetcher
   );
-  // SWR pentru cursurile la care ești înscris
   const { data: enrolledCourses = [] } = useSWR<Classroom[]>(
     isStudentPage ? "/api/enrolled-courses" : null,
     fetcher
@@ -52,7 +61,6 @@ export const SidebarRoutes = ({
   const [isTeachingOpen, setIsTeachingOpen] = useState(true);
   const [isEnrolledOpen, setIsEnrolledOpen] = useState(true);
 
-  // când sidebar se închide, resetăm dropdown-urile
   useEffect(() => {
     if (!isSidebarOpen) {
       setIsTeachingOpen(true);
@@ -82,111 +90,145 @@ export const SidebarRoutes = ({
     { icon: GraduationCap, label: "Catalog", href: "/grades" },
   ];
 
+  const handleClickFactory =
+    (originalOnClick?: () => void) => () => {
+      if (originalOnClick) {
+        originalOnClick();
+      }
+      if (isInsideSheet && closeSheet) {
+        closeSheet();
+      }
+    };
+
   return (
     <div className="flex flex-col w-full">
-      {/* rutele principale */}
       {(isTeacherPage
         ? teacherMain
         : isStudentPage
         ? studentMain
         : guestMain
       ).map((route) => (
-        <SidebarItem
-          key={route.href}
-          icon={route.icon}
-          label={route.label}
+        <Link
           href={route.href}
-          isSidebarOpen={isSidebarOpen}
-          isSidebarHovered={isSidebarHovered}
-        />
+          key={route.href}
+          onClick={handleClickFactory(undefined)}
+        >
+          <SidebarItem
+            icon={route.icon}
+            label={route.label}
+            href={route.href}
+            isSidebarOpen={isSidebarOpen}
+            isSidebarHovered={isSidebarHovered}
+          />
+        </Link>
       ))}
 
-      {/* secţiunea Teacher */}
       {isTeacherPage && (
         <>
           <hr className="border-t border-gray-300 my-2" />
-          <SidebarItem
-            icon={UsersRound}
-            label="Cursuri la care predai"
+
+          <Link
             href="#"
-            isSidebarOpen={isSidebarOpen}
-            isSidebarHovered={isSidebarHovered}
-            extraIcon={
-              (isSidebarOpen || isSidebarHovered) && (
-                <ChevronDown
-                  className={`w-4 h-4 ml-2 transition-transform ${
-                    isTeachingOpen ? "rotate-180" : "rotate-0"
-                  } text-gray-600`}
-                />
-              )
-            }
-            onClick={() => setIsTeachingOpen((o) => !o)}
-          />
+            onClick={handleClickFactory(() => setIsTeachingOpen((o) => !o))}
+          >
+            <SidebarItem
+              icon={UsersRound}
+              label="Cursuri la care predai"
+              href="#"
+              isSidebarOpen={isSidebarOpen}
+              isSidebarHovered={isSidebarHovered}
+              extraIcon={
+                (isSidebarOpen || isSidebarHovered) && (
+                  <ChevronDown
+                    className={`w-4 h-4 ml-2 transition-transform ${
+                      isTeachingOpen ? "rotate-180" : "rotate-0"
+                    } text-gray-600`}
+                  />
+                )
+              }
+            />
+          </Link>
+
           {isTeachingOpen &&
             (isSidebarOpen || isSidebarHovered) &&
             teachingCourses.map((c) => (
-              <SidebarItem
-                key={c.id}
-                leadingIcon={
-                  <div
-                    className={`w-7 h-7 flex items-center justify-center rounded-full text-white text-sm font-semibold ${getColorForCourse(
-                      c.name
-                    )}`}
-                  >
-                    {c.name.charAt(0).toUpperCase()}
-                  </div>
-                }
-                label={c.name}
+              <Link
                 href={`/teacher/courses/${c.id}`}
-                isSidebarOpen={isSidebarOpen}
-                isSidebarHovered={isSidebarHovered}
-                icon={UsersRound}
-              />
+                key={c.id}
+                onClick={handleClickFactory(undefined)}
+              >
+                <SidebarItem
+                  leadingIcon={
+                    <div
+                      className={`w-7 h-7 flex items-center justify-center rounded-full text-white text-sm font-semibold ${getColorForCourse(
+                        c.name
+                      )}`}
+                    >
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+                  }
+                  label={c.name}
+                  href={`/teacher/courses/${c.id}`}
+                  isSidebarOpen={isSidebarOpen}
+                  isSidebarHovered={isSidebarHovered}
+                  icon={UsersRound}
+                />
+              </Link>
             ))}
         </>
       )}
 
-      {/* secţiunea Student */}
       {isStudentPage && (
         <>
           <hr className="border-t border-gray-300 my-2" />
-          <SidebarItem
-            icon={UsersRound}
-            label="Cursuri la care ești înscris"
+
+          <Link
             href="#"
-            isSidebarOpen={isSidebarOpen}
-            isSidebarHovered={isSidebarHovered}
-            extraIcon={
-              (isSidebarOpen || isSidebarHovered) && (
-                <ChevronDown
-                  className={`w-4 h-4 ml-2 transition-transform ${
-                    isEnrolledOpen ? "rotate-180" : "rotate-0"
-                  } text-gray-600`}
-                />
-              )
-            }
-            onClick={() => setIsEnrolledOpen((o) => !o)}
-          />
+            onClick={handleClickFactory(() => setIsEnrolledOpen((o) => !o))}
+          >
+            <SidebarItem
+              icon={UsersRound}
+              label="Cursuri la care ești înscris"
+              href="#"
+              isSidebarOpen={isSidebarOpen}
+              isSidebarHovered={isSidebarHovered}
+              extraIcon={
+                (isSidebarOpen || isSidebarHovered) && (
+                  <ChevronDown
+                    className={`w-4 h-4 ml-2 transition-transform ${
+                      isEnrolledOpen ? "rotate-180" : "rotate-0"
+                    } text-gray-600`}
+                  />
+                )
+              }
+            />
+          </Link>
+
           {isEnrolledOpen &&
             (isSidebarOpen || isSidebarHovered) &&
             enrolledCourses.map((c) => (
-              <SidebarItem
-                key={c.id}
-                leadingIcon={
-                  <div
-                    className={`w-7 h-7 flex items-center justify-center rounded-full text-white text-sm font-semibold ${getColorForCourse(
-                      c.name
-                    )}`}
-                  >
-                    {c.name.charAt(0).toUpperCase()}
-                  </div>
-                }
-                label={c.name}
+              <Link
                 href={`/student/courses/${c.id}`}
-                isSidebarOpen={isSidebarOpen}
-                isSidebarHovered={isSidebarHovered}
-                icon={UsersRound}
-              />
+                key={c.id}
+                onClick={handleClickFactory(undefined)}
+              >
+                <SidebarItem
+                  leadingIcon={
+                    <div
+                      className={`w-7 h-7 flex items-center justify-center rounded-full text-white text-sm font-semibold ${getColorForCourse(
+                        c.name
+                      )}`}
+                    >
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+                  }
+                  label={c.name}
+                  href={`/student/courses/${c.id}`}
+                  isSidebarOpen={isSidebarOpen}
+                  isSidebarHovered={isSidebarHovered}
+                  icon={UsersRound}
+                />
+              </Link>
             ))}
         </>
       )}

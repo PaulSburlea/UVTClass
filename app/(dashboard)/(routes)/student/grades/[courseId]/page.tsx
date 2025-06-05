@@ -1,3 +1,5 @@
+// app/(dashboard)/(routes)/teacher/grades/[courseId]/[studentId]/page.tsx
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -113,7 +115,8 @@ export default function StudentCourseGradesPage() {
   return (
     <>
       <CourseSubNavbar courseId={courseId} />
-      <div className="max-w-4xl mx-auto pt-[116px] p-6">
+
+      <div className="max-w-4xl mx-auto pt-[116px] px-4 md:px-0">
         <h1 className="text-3xl font-semibold mb-4">{course.name}</h1>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
@@ -133,7 +136,7 @@ export default function StudentCourseGradesPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100">
@@ -155,9 +158,7 @@ export default function StudentCourseGradesPage() {
                   <td className="p-3 text-right font-medium">
                     {e.score.toFixed(1)}
                   </td>
-                  <td className="p-3 text-right">
-                    {e.weight.toFixed(1)}%
-                  </td>
+                  <td className="p-3 text-right">{e.weight.toFixed(1)}%</td>
                   <td className="p-3">
                     <span
                       className={`px-2 py-1 rounded ${categoryColors[e.category]}`}
@@ -169,6 +170,37 @@ export default function StudentCourseGradesPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="md:hidden space-y-4">
+          {filtered.map((e, i) => (
+            <div
+              key={e.id ?? i}
+              className={`border rounded-lg p-4 ${
+                i % 2 === 0 ? "bg-white" : "bg-gray-50"
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <h2 className="font-semibold text-lg">{e.title}</h2>
+                <span
+                  className={`text-sm font-medium rounded px-2 py-1 ${categoryColors[e.category]}`}
+                >
+                  {categoryLabels[e.category]}
+                </span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600">Data: {e.date}</div>
+              <div className="mt-1 flex justify-between items-center">
+                <div>
+                  <span className="font-medium">Notă: </span>
+                  {e.score.toFixed(1)}
+                </div>
+                <div>
+                  <span className="font-medium">Pondere: </span>
+                  {e.weight.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </>
