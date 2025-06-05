@@ -161,9 +161,10 @@ export function EditPostModal({
   const handleRemoveFile = async (fileToRemove: PreviewFile) => {
     setFilesPreview((prev) => prev.filter((f) => f !== fileToRemove));
 
-    if (isExternalFile(fileToRemove) && fileToRemove.__id) {
-      setRemovedIds((prev) => [...prev, fileToRemove.__id!]);
-    }
+  const maybeId = (fileToRemove as ExternalFile).__id;
+  if (maybeId) {
+    setRemovedIds((prev) => [...prev, maybeId]);
+  }
 
     if (
       !isExternalFile(fileToRemove) &&

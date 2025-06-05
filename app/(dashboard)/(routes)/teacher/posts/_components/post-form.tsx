@@ -100,6 +100,19 @@ export function PostForm({
     fileInputRef.current?.click();
   };
 
+    const handleToggleOpen = () => {
+    if (open) {
+      setTitle("");
+      setText("");
+      setFilesPreview([]);
+      setYtUrl("");
+      setExtUrl("");
+      setYtModal(false);
+      setLinkModal(false);
+    }
+    setOpen((o) => !o);
+  };
+
   const postExternalMaterial = (
     url: string,
     type: ExternalFile["__type"]
@@ -185,7 +198,7 @@ const handleTextPost = async () => {
     <div className="mt-4 w-full max-w-screen-lg">
       <div
         className="p-4 border rounded-lg cursor-pointer bg-white hover:bg-gray-50"
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleToggleOpen}
       >
         <div className="flex items-center gap-2">
           {open ? <MinusCircle size={20} /> : <PlusCircle size={20} />}
@@ -260,9 +273,9 @@ const handleTextPost = async () => {
                       key={i}
                       className="flex items-center justify-between border p-2 rounded-lg"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         {thumb}
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                           <span className="text-sm font-medium truncate">
                             {file.name}
                           </span>
