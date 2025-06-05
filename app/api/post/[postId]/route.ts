@@ -1,32 +1,30 @@
+// frontend/app/api/post/[postId]/route.ts
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
-import { writeFile } from "fs/promises";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
-
-import type { MaterialType } from "@/app/types/material"; // ajustează calea dacă e alta
+import { auth }        from "@clerk/nextjs/server";
+import { db }          from "@/lib/db";
+import type { MaterialType } from "@/app/types/material";
+import { utapi }       from "@/server/uploadthing";
 
 async function requireEnrollment(postId: string, userId: string) {
   const post = await db.post.findUnique({ where: { id: postId } });
   if (!post) return false;
-  const e = await db.userClassroom.findFirst({
+  const enrollment = await db.userClassroom.findFirst({
     where: { classroomId: post.classroomId, userId },
   });
-  return !!e;
+  return Boolean(enrollment);
 }
 
 async function requireTeacher(postId: string, userId: string) {
   const post = await db.post.findUnique({ where: { id: postId } });
   if (!post) return false;
-  const e = await db.userClassroom.findFirst({
+  const roleEntry = await db.userClassroom.findFirst({
     where: {
       classroomId: post.classroomId,
       userId,
       role: "TEACHER",
     },
   });
-  return !!e;
+  return Boolean(roleEntry);
 }
 
 // ── DELETE ─────────────────────────────────────────────────────────────────────
@@ -36,18 +34,49 @@ export async function DELETE(
 ) {
   const { postId } = await context.params;
   const { userId } = await auth();
-  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
-
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
   if (!(await requireTeacher(postId, userId))) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
   try {
-    await db.material.deleteMany({ where: { postId } });
+    // 1) Găsim toate materialele de tip FILE asociate postării
+    const fileMaterials = await db.material.findMany({
+      where: {
+        postId,
+        type: "FILE",
+      },
+      select: {
+        id: true,
+        fileKey: true,
+      },
+    });
+
+    // 2) Pentru fiecare material, ștergem fișierul din UploadThing
+    for (const mat of fileMaterials) {
+      if (mat.fileKey) {
+        try {
+          await utapi.deleteFiles(mat.fileKey);
+        } catch (deleteErr) {
+          console.error("Eroare la ștergerea UploadThing pentru key:", mat.fileKey, deleteErr);
+          // Continuăm chiar dacă ștergerea într‐unul dintre fișiere eșuează
+        }
+      }
+    }
+
+    // 3) Ștergem materialele din baza de date
+    await db.material.deleteMany({
+      where: { postId },
+    });
+
+    // 4) Ștergem postarea
     await db.post.delete({ where: { id: postId } });
+
     return new NextResponse(null, { status: 204 });
-  } catch (err) {
-    console.error("Eroare la ștergerea postării:", err);
+  } catch (error) {
+    console.error("Eroare la ștergerea postării:", error);
     return new NextResponse("Eroare la server", { status: 500 });
   }
 }
@@ -59,80 +88,90 @@ export async function PUT(
 ) {
   const { postId } = await context.params;
   const { userId } = await auth();
-  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
-
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
   if (!(await requireTeacher(postId, userId))) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const formData = await request.formData();
-  const title = formData.get("title")?.toString().trim();
-  const content = formData.get("content")?.toString() ?? null;
-  if (!title) return new NextResponse("Titlul este obligatoriu", { status: 400 });
-
-  // Extragem lista de ID-uri de materiale care au fost șterse în frontend
-  const removedIds = formData.getAll("removedIds").map((id) => id.toString());
-
   try {
-    // Șterg materialele eliminate
-    if (removedIds.length) {
+    const formData = await request.formData();
+    const title   = formData.get("title")?.toString().trim();
+    const content = formData.get("content")?.toString() ?? null;
+    if (!title) {
+      return new NextResponse("Titlul este obligatoriu", { status: 400 });
+    }
+
+    // 1) Ștergem materialele eliminate din frontend
+    const removedIds = formData.getAll("removedIds").map((id) => id.toString());
+    if (removedIds.length > 0) {
       await db.material.deleteMany({ where: { id: { in: removedIds } } });
     }
 
-    // Actualizez postarea în baza de date
+    // 2) Actualizăm postarea
     const updatedPost = await db.post.update({
       where: { id: postId },
       data: { title, content, editedAt: new Date() },
     });
 
-    // Procesăm link-urile (YOUTUBE, DRIVE, LINK)
-    const links = formData.getAll("links") as string[];   // fiecare element este un URL (string)
-    const types = formData.getAll("types") as string[];   // fiecare element este un string: "YOUTUBE" | "DRIVE" | "LINK" etc.
-
+    // 3) Procesăm link-urile externe (YOUTUBE / DRIVE / LINK)
+    const links = formData.getAll("links") as string[];
+    const types = formData.getAll("types") as string[];
     for (let i = 0; i < links.length; i++) {
-      const url = links[i];
+      const url   = links[i];
       let typeStr = types[i] as MaterialType;
-      // Dacă typeStr nu corespunde niciunuia dintre valorile așteptate, fallback la "LINK"
       if (!["FILE", "YOUTUBE", "DRIVE", "LINK"].includes(typeStr)) {
         typeStr = "LINK";
       }
-      // Creăm materialul în baza de date
       await db.material.create({
         data: {
-          title: "Material extern",
-          name: url,
-          type: typeStr,    // tipul vine ca string: "YOUTUBE" | "DRIVE" | "LINK"
+          title:  "Material extern",
+          name:   url,
+          type:   typeStr,
           url,
           postId,
         },
       });
     }
 
-    // Procesăm fișierele încărcate
-    const files = formData.getAll("files") as Blob[];
-    for (const blob of files) {
-      const file = blob as File;
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const ext = path.extname(file.name);
-      const fileName = `${uuidv4()}${ext}`;
-      const uploadPath = path.join(process.cwd(), "public", "uploads", fileName);
-      await writeFile(uploadPath, buffer);
+    // 4) Încarcăm eventualele fișiere noi prin UploadThing
+    //     ⇐ CORECȚIE: preluăm și fileNames din formData
+    const files     = formData.getAll("files") as File[];
+    const fileNames = formData.getAll("fileNames").map((f) => f.toString());
+    if (files.length > 0) {
+      // utapi.uploadFiles returnează un array de { key, url, mimeType, size }
+      const results = await utapi.uploadFiles(files);
 
-      // Creăm materialul de tip FILE în baza de date
-      await db.material.create({
-        data: {
-          name: file.name,
-          title: file.name,
-          type: "FILE", // aici e întotdeauna "FILE"
-          filePath: `/uploads/${fileName}`,
-          postId,
-        },
-      });
+      for (let i = 0; i < results.length; i++) {
+        const res = results[i];
+        if (res.error) {
+          console.error("UploadThing error la fișier index", i, res.error);
+          continue;
+        }
+        const uf = res.data; 
+        // uf = { key: string; url: string; mimeType: string; size: number }
+
+        //  ⇐ CORECȚIA CHEIE:
+        //   în loc să facem `name: uf.key`, păstrăm numele original
+        //   și adăugăm fileKey = uf.key pentru ștergerea ulterioară
+        await db.material.create({
+          data: {
+            title:    fileNames[i],            // numele original
+            name:     fileNames[i],            // numele original
+            filePath: fileNames[i],            // exact cum ai avea în PostForm
+            fileKey:  uf.key,                  // cheia UploadThing în DB
+            type:     "FILE",
+            url:      uf.ufsUrl,               // adresa UploadThing
+            postId,
+          },
+        });
+      }
     }
 
     return NextResponse.json(updatedPost);
-  } catch (err) {
-    console.error("Eroare la actualizarea postării:", err);
+  } catch (error) {
+    console.error("Eroare la actualizarea postării:", error);
     return new NextResponse("Eroare la server", { status: 500 });
   }
 }
@@ -144,7 +183,9 @@ export async function GET(
 ) {
   const { postId } = await context.params;
   const { userId } = await auth();
-  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
 
   if (!(await requireEnrollment(postId, userId))) {
     return new NextResponse("Forbidden", { status: 403 });
@@ -155,10 +196,12 @@ export async function GET(
       where: { id: postId },
       include: { materials: true },
     });
-    if (!post) return new NextResponse("Post not found", { status: 404 });
+    if (!post) {
+      return new NextResponse("Post not found", { status: 404 });
+    }
     return NextResponse.json(post);
-  } catch (err) {
-    console.error("Error fetching post:", err);
+  } catch (error) {
+    console.error("Error fetching post:", error);
     return new NextResponse("Error fetching post", { status: 500 });
   }
 }

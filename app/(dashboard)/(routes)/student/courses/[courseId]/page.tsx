@@ -1,4 +1,5 @@
 // frontend/app/(dashboard)/(routes)/student/courses/[courseId]/page.tsx
+
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -25,19 +26,24 @@ const StudentCoursePage = async ({ params }: CourseIdPageProps) => {
   const course = await db.classroom.findUnique({ where: { id: courseId } });
   if (!course) return redirect("/student/courses");
 
-  // rolul vine din tabela userClassroom
-  const userRole = enrollment.role; 
+  const userRole = enrollment.role;
 
   return (
     <>
       <CourseSubNavbar courseId={courseId} />
-      <div className="pt-[50px] px-20 flex flex-col items-center">
-        <CourseCard course={course} currentUserId={userId} />
-        <PostListWrapper
-          courseId={courseId}
-          userId={userId}
-          userRole={userRole}
-        />
+
+      <div className="pt-[50px] px-4 sm:px-6 lg:px-20 flex flex-col items-center">
+        <div className="w-full max-w-3xl">
+          <CourseCard course={course} currentUserId={userId} />
+        </div>
+
+        <div className="w-full max-w-3xl mt-6">
+          <PostListWrapper
+            courseId={courseId}
+            userId={userId}
+            userRole={userRole}
+          />
+        </div>
       </div>
     </>
   );

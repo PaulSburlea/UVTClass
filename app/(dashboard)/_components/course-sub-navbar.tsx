@@ -21,13 +21,15 @@ export const CourseSubNavbar = ({ courseId }: CourseSubNavbarProps) => {
   const { isSidebarOpen, isSidebarHovered } = useSidebar();
   const sidebarWidth = isSidebarOpen || isSidebarHovered ? 300 : 76;
 
-  // Detectăm automat rolul din URL
   const base = pathname.startsWith("/student/") ? "/student" : "/teacher";
 
   return (
     <div
-      className="bg-white border-b h-[50px] fixed top-[66px] z-40 flex items-center px-6 transition-all duration-200"
-      style={{ left: sidebarWidth, right: 0 }}
+      className="bg-white border-b h-[50px] fixed top-[66px] z-40 flex items-center px-6 transition-all duration-200
+                 left-0 right-0 md:left-[var(--sidebar-width)]"
+      style={{ 
+        '--sidebar-width': `${sidebarWidth}px`
+      } as React.CSSProperties}
     >
       {tabs.map((tab) => {
         const href = tab.getHref(base, courseId);

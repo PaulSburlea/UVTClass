@@ -1,25 +1,39 @@
-import { Menu } from "lucide-react";
+"use client";
 
+import { useState } from "react";
 import {
-    Sheet,
-    SheetContent,
-    SheetTrigger
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
-
+import { Menu } from "lucide-react";
 import { Sidebar } from "./sidebar";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export const MobileSidebar = () => {
-    return (
-        <Sheet>
-            <SheetTrigger className="md:hidden pr-4 hover:opacity-75 transition">
-                <Menu />
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 bg-white">
-                <Sidebar
-                    isSidebarOpen={true}
-                    isSidebarHovered={false}
-                />
-            </SheetContent>
-        </Sheet>
-    )
-}
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger className="md:hidden pr-4 hover:opacity-75 transition">
+        <Menu />
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0 bg-white">
+        <SheetHeader>
+          <SheetTitle>
+            <VisuallyHidden>Mobile navigation</VisuallyHidden>
+          </SheetTitle>
+        </SheetHeader>
+
+        <Sidebar
+          isSidebarOpen={true}
+          isSidebarHovered={false}
+          isInsideSheet={true}
+          closeSheet={() => setIsOpen(false)}
+        />
+      </SheetContent>
+    </Sheet>
+  );
+};

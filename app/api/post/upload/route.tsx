@@ -1,27 +1,28 @@
+// frontend/app/api/post/upload/route.ts
+
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
-import { mkdir } from "fs/promises";
+import { utapi }        from "@/server/uploadthing";
 
 export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
 
   if (!file) {
-    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    return new NextResponse("No file uploaded", { status: 400 });
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const fileExt = path.extname(file.name);
-  const fileName = `${uuidv4()}${fileExt}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
+  try {
+    const results = await utapi.uploadFiles([file]);
+    const res = results[0];
+    if (res.error || !res.data) {
+      console.error("UploadThing error:", res.error);
+      return new NextResponse("Error uploading file", { status: 500 });
+    }
+    const uf = res.data;
 
-  await mkdir(uploadDir, { recursive: true }); // asigură-te că folderul există
-
-  const filePath = path.join(uploadDir, fileName);
-  await writeFile(filePath, buffer);
-
-  const publicUrl = `/uploads/${fileName}`;
-  return NextResponse.json({ success: true, url: publicUrl });
+    return NextResponse.json({ success: true, url: uf.ufsUrl });
+  } catch (err) {
+    console.error("UploadThing upload error:", err);
+    return new NextResponse("Error uploading file", { status: 500 });
+  }
 }
