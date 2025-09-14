@@ -1,10 +1,10 @@
-// frontend/app/api/post/[postId]/route.ts
 import { NextResponse } from "next/server";
 import { auth }        from "@clerk/nextjs/server";
 import { db }          from "@/lib/db";
 import type { MaterialType } from "@/app/types/material";
 import { utapi }       from "@/server/uploadthing";
 
+// Verifică dacă userul este înscris la clasa asociată postului
 async function requireEnrollment(postId: string, userId: string) {
   const post = await db.post.findUnique({ where: { id: postId } });
   if (!post) return false;
@@ -14,6 +14,7 @@ async function requireEnrollment(postId: string, userId: string) {
   return Boolean(enrollment);
 }
 
+// Verifică dacă userul are rol de TEACHER în clasa asociată postului
 async function requireTeacher(postId: string, userId: string) {
   const post = await db.post.findUnique({ where: { id: postId } });
   if (!post) return false;
@@ -27,7 +28,6 @@ async function requireTeacher(postId: string, userId: string) {
   return Boolean(roleEntry);
 }
 
-// ── DELETE ─────────────────────────────────────────────────────────────────────
 export async function DELETE(
   _request: Request,
   context: { params: Promise<{ postId: string }> }
@@ -61,7 +61,6 @@ export async function DELETE(
           await utapi.deleteFiles(mat.fileKey);
         } catch (deleteErr) {
           console.error("Eroare la ștergerea UploadThing pentru key:", mat.fileKey, deleteErr);
-          // Continuăm chiar dacă ștergerea într‐unul dintre fișiere eșuează
         }
       }
     }
@@ -81,7 +80,6 @@ export async function DELETE(
   }
 }
 
-// ── PUT ────────────────────────────────────────────────────────────────────────
 export async function PUT(
   request: Request,
   context: { params: Promise<{ postId: string }> }
@@ -136,7 +134,6 @@ export async function PUT(
     }
 
     // 4) Încarcăm eventualele fișiere noi prin UploadThing
-    //     ⇐ CORECȚIE: preluăm și fileNames din formData
     const files     = formData.getAll("files") as File[];
     const fileNames = formData.getAll("fileNames").map((f) => f.toString());
     if (files.length > 0) {
@@ -150,19 +147,15 @@ export async function PUT(
           continue;
         }
         const uf = res.data; 
-        // uf = { key: string; url: string; mimeType: string; size: number }
 
-        //  ⇐ CORECȚIA CHEIE:
-        //   în loc să facem `name: uf.key`, păstrăm numele original
-        //   și adăugăm fileKey = uf.key pentru ștergerea ulterioară
         await db.material.create({
           data: {
-            title:    fileNames[i],            // numele original
-            name:     fileNames[i],            // numele original
-            filePath: fileNames[i],            // exact cum ai avea în PostForm
-            fileKey:  uf.key,                  // cheia UploadThing în DB
+            title:    fileNames[i],
+            name:     fileNames[i],
+            filePath: fileNames[i], 
+            fileKey:  uf.key, 
             type:     "FILE",
-            url:      uf.ufsUrl,               // adresa UploadThing
+            url:      uf.ufsUrl,
             postId,
           },
         });
@@ -176,7 +169,6 @@ export async function PUT(
   }
 }
 
-// ── GET ────────────────────────────────────────────────────────────────────────
 export async function GET(
   _request: Request,
   context: { params: Promise<{ postId: string }> }
@@ -192,6 +184,7 @@ export async function GET(
   }
 
   try {
+    // Preluăm postarea cu materialele asociate
     const post = await db.post.findUnique({
       where: { id: postId },
       include: { materials: true },

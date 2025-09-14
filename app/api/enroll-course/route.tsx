@@ -11,6 +11,7 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Căutăm cursul după cod
     const classroom = await db.classroom.findUnique({
       where: { code },
     });
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
       return new NextResponse("Cursul nu a fost găsit", { status: 404 });
     }
 
-    // Verifică dacă studentul este deja înscris
+    // Verificăm dacă utilizatorul este deja înscris
     const alreadyEnrolled = await db.userClassroom.findUnique({
       where: {
         classroomId_userId: {
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
       return new NextResponse("Te-ai înscris deja la acest curs!", { status: 400 });
     }
 
-    // Creează înregistrarea de legătură
+    // Creăm asocierea ca student
     await db.userClassroom.create({
       data: {
         classroomId: classroom.id,

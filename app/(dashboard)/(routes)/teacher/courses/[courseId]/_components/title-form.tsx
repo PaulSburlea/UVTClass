@@ -27,6 +27,7 @@ interface TtileFormProps {
   courseId: string;
 }
 
+// Schema Zod pentru validarea titlului cursului
 const formSchema = z.object({
   name: z.string().min(1, {
     message: "Titlul este obligatoriu",
@@ -46,6 +47,7 @@ export const TitleForm = ({ initialData, courseId }: TtileFormProps) => {
 
   const { isSubmitting, isValid } = form.formState;
 
+  // Trimite PATCH pentru actualizarea numelui cursului
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/courses/${courseId}`, values);
@@ -59,6 +61,7 @@ export const TitleForm = ({ initialData, courseId }: TtileFormProps) => {
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4 sm:p-6">
+      {/* Header secțiune cu buton de toggle edit */}
       <div className="font-medium flex items-center justify-between">
         <span className="text-base sm:text-lg">Numele cursului</span>
         <Button
@@ -82,12 +85,14 @@ export const TitleForm = ({ initialData, courseId }: TtileFormProps) => {
         </Button>
       </div>
 
+      {/* Afișare read-only a titlului când nu e editare */}
       {!isEditing && (
         <p className="text-sm mt-2 truncate">
           {initialData.name}
         </p>
       )}
 
+      {/* Formularul de editare a titlului */}
       {isEditing && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">

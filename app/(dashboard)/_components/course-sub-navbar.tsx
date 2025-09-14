@@ -1,4 +1,3 @@
-// app/(dashboard)/_components/course-sub-navbar.tsx
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -6,6 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./sidebar-contex";
 
+// Tab-urile din sub-navbar, cu funcții pentru generarea linkurilor
 const tabs = [
   { label: "Flux",     getHref: (base: string, courseId: string) => `${base}/courses/${courseId}` },
   { label: "Note",     getHref: (base: string, courseId: string) => `${base}/grades/${courseId}` },
@@ -19,8 +19,11 @@ interface CourseSubNavbarProps {
 export const CourseSubNavbar = ({ courseId }: CourseSubNavbarProps) => {
   const pathname = usePathname();
   const { isSidebarOpen, isSidebarHovered } = useSidebar();
+
+  // Sidebar-ul are lățime variabilă în funcție de stare
   const sidebarWidth = isSidebarOpen || isSidebarHovered ? 300 : 76;
 
+  // Determină prefixul rutei (student / teacher)
   const base = pathname.startsWith("/student/") ? "/student" : "/teacher";
 
   return (

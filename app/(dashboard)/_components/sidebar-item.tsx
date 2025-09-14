@@ -1,5 +1,5 @@
-// sidebar-item.tsx
 "use client";
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
@@ -29,24 +29,29 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
 }) => {
   const pathname = usePathname();
   const router = useRouter();
+
+  // Segmentele din URL pentru a compara și determina dacă link-ul este activ
   const pathSegs = pathname.split("/");
   const hrefSegs = href.split("/");
 
+  // Verifică dacă link-ul e pentru un curs (pentru teacher sau student)
   const isCourseLink =
     (hrefSegs[1] === "teacher" && hrefSegs[2] === "courses") ||
     (hrefSegs[1] === "student" && hrefSegs[2] === "courses");
   const currentCourseId = pathSegs[3];
-  const thisCourseId    = hrefSegs[3];
+  const thisCourseId = hrefSegs[3];
 
+  // Determină dacă item-ul este activ, fie link-ul exact, fie același ID curs
   const isActive =
-    pathname === href ||
-    (isCourseLink && thisCourseId === currentCourseId);
+    pathname === href || (isCourseLink && thisCourseId === currentCourseId);
 
+  // Click handler: dacă există onClick custom, îl apelează, altfel navighează
   const handleClick = () => {
     if (onClick) onClick();
     else router.push(href);
   };
 
+  // Ar trebui să afișeze label-ul (sidebar-ul e deschis sau e pe hover)
   const shouldExpand = isSidebarOpen || isSidebarHovered;
 
   return (
@@ -66,6 +71,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
           leadingIcon ? "pl-2.5" : "pl-3"
         )}
       >
+        {/* Icon principal sau icon custom înainte */}
         <div className="flex-shrink-0 flex items-center justify-center">
           {leadingIcon ?? (
             <Icon
@@ -77,6 +83,8 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
             />
           )}
         </div>
+
+        {/* Label-ul se afișează doar când sidebar-ul este extins */}
         <span
           className={cn(
             leadingIcon
@@ -88,6 +96,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
         >
           {label}
         </span>
+
         {extraIcon && <span className="ml-auto pr-3">{extraIcon}</span>}
       </div>
     </Button>

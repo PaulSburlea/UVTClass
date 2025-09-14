@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "jsx": "react-jsx" 
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "__tests__/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ],
+  "exclude": ["node_modules", "cypress"]
+}

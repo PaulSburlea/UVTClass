@@ -1,5 +1,3 @@
-// frontend/app/api/admin/teachers/route.ts
-
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { db }                from "@/lib/db";
 import { NextResponse }      from "next/server";
@@ -20,7 +18,7 @@ export async function GET() {
     select: { userId: true },
   });
 
-  // 3. Construim răspunsul „enhanced” cu informații din Clerk și cursuri
+  // 3. Construim răspunsul cu informații din Clerk și cursuri
   const enhanced = await Promise.all(
     teachers.map(async (t: { userId: string }) => {
       // 3a. Obținem clientul Clerk

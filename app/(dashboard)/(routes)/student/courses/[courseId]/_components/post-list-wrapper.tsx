@@ -1,4 +1,3 @@
-// frontend/app/(dashboard)/(routes)/student/courses/[courseId]/_components/post-list-wrapper.tsx
 "use client";
 
 import { useState } from "react";
@@ -17,6 +16,7 @@ const PostListWrapper = ({
 }: PostListWrapperProps) => {
   const [refetchKey, setRefetchKey] = useState(0);
 
+  // Callback apelat după crearea/ștergerea/actualizarea unui post
   const handlePostUpdated = () => {
     setRefetchKey((prev) => prev + 1);
   };

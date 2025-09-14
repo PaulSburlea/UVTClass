@@ -10,8 +10,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+
 import { ConfirmModal } from "@/components/confirm-modal";
 import { EditPostModal } from "./edit-post-modal";
+
 import type { Post, Material } from "../../../../../types/posts";
 
 export function PostList({
@@ -19,7 +21,7 @@ export function PostList({
   refetchKey,
   onPostUpdated,
   editable = true,
-  userRole, // role: "TEACHER" | "STUDENT"
+  userRole,
 }: {
   courseId: string;
   refetchKey: number;
@@ -34,6 +36,7 @@ export function PostList({
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
+  // Fetch posts la mount și când refetchKey sau courseId se schimbă
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -49,6 +52,7 @@ export function PostList({
     fetchPosts();
   }, [courseId, refetchKey]);
 
+  // Încarcă detaliile unui post pentru editare
   const handleEdit = async (post: Post) => {
     try {
       const res = await fetch(`/api/post/${post.id}`);
@@ -60,11 +64,13 @@ export function PostList({
     }
   };
 
+  // Deschide modalul de confirmare ștergere
   const handleDeleteClick = (post: Post) => {
     setPostToDelete(post);
     setIsConfirmOpen(true);
   };
 
+  // Confirmă ștergerea prin API și actualizează UI-ul local
   const confirmDelete = async () => {
     if (!postToDelete) return;
     try {
@@ -96,6 +102,7 @@ export function PostList({
           className="p-4 border rounded bg-white shadow-sm space-y-2 relative"
         >
           <div className="flex items-center gap-3">
+            {/* Icon și link către detaliile postului */}
             <div className="w-10 h-10 flex items-center justify-center bg-blue-600 rounded-full text-white">
               <BookOpen size={20} />
             </div>
@@ -143,6 +150,8 @@ export function PostList({
                 )}
               </div>
             </div>
+
+            {/* Meniul Edit/Delete */}
             {editable && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
                 <DropdownMenu>
@@ -176,6 +185,8 @@ export function PostList({
               </div>
             )}
           </div>
+
+          {/* Modale de confirmare și editare */}
           {editable && (
             <>
               <ConfirmModal

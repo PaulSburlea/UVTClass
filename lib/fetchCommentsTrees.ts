@@ -9,10 +9,6 @@ export interface CommentNode {
   replies?: CommentNode[];
 }
 
-/**
- * Fetches comments for postId, then for each comment
- * fetches its replies recursively.
- */
 export async function fetchCommentsTree(postId: string): Promise<CommentNode[]> {
   // 1. Ia top-level comments
   const rootRes = await fetch(`/api/comments?postId=${postId}`);

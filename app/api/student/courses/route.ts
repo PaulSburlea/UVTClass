@@ -1,4 +1,3 @@
-// app/api/student/courses/route.ts
 import { NextResponse } from "next/server";
 import { db }           from "@/lib/db";
 import { auth }         from "@clerk/nextjs/server";
@@ -30,8 +29,6 @@ export async function GET() {
     enrollments.map(
       async (enr: typeof enrollments[number]) => {
         const cls = enr.classroom;
-        // Dacă vrei numele profesorului, îl poți prelua din tabela Teacher sau User
-        // aici pur și simplu vom afișa un placeholder:
         const teacherName = "—";
 
         return {

@@ -15,6 +15,8 @@ interface Teacher {
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function TeacherTable() {
+  // Utilizăm SWR pentru a prelua lista de profesori
+  // și pentru a gestiona starea de încărcare și erorile
   const { data, error, mutate, isValidating } = useSWR<{ teachers: Teacher[] }>(
     "/api/admin/teachers",
     fetcher,
@@ -25,28 +27,38 @@ export default function TeacherTable() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  // Funcția pentru a gestiona ștergerea unui profesor
+  // Folosim toast pentru notificări în loc de alert()
   async function handleDelete() {
     if (!selectedId) return;
-    const res = await fetch("/api/admin/remove-teacher", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teacherId: selectedId }),
-    });
-    if (res.ok) {
-      toast.success("Profesor șters cu succes");
-      // Optimizăm interfața: actualizăm local și revalidăm în fundal
-      mutate(
-        prev => ({ teachers: prev?.teachers.filter(t => t.userId !== selectedId) || [] }),
-        { revalidate: true }
-      );
-    } else {
-      const { error } = await res.json();
-      toast.error(error || "Eroare la ștergere");
+        try {
+      const res = await fetch("/api/admin/remove-teacher", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacherId: selectedId }),
+      });
+      if (res.ok) {
+        toast.success("Profesor șters cu succes");
+        // Actualizăm lista de profesori după ștergere
+        // Folosim mutate pentru a reîncărca datele
+        mutate(
+          prev => ({ teachers: prev?.teachers.filter(t => t.userId !== selectedId) || [] }),
+          { revalidate: true }
+        );
+      } else {
+        const { error } = await res.json();
+        toast.error(error || "Eroare la ștergere");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Eroare la ștergere");
+    } finally {
+      setConfirmOpen(false);
+      setSelectedId(null);
     }
-    setConfirmOpen(false);
-    setSelectedId(null);
-  }
+  };
 
+  // Afișăm un mesaj de eroare dacă nu am putut prelua datele
   if (error) {
     toast.error("Eroare la preluarea profesorilor");
   }
@@ -99,6 +111,7 @@ export default function TeacherTable() {
         </tbody>
       </table>
 
+      {/* Modal de confirmare pentru ștergere */}
       <ConfirmModal
         isOpen={confirmOpen}
         onCancel={() => setConfirmOpen(false)}

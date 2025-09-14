@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+
 import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
 import { ClientCoursePage } from "./_components/client-course-page";
 
@@ -15,6 +16,7 @@ const CourseIdPage = async (props: CourseIdPageProps) => {
   const { userId } = await auth();
   if (!userId) return redirect("/");
 
+  // Preluăm cursul din baza de date
   const course = await db.classroom.findUnique({
     where: { id: params.courseId },
   });
@@ -23,7 +25,14 @@ const CourseIdPage = async (props: CourseIdPageProps) => {
   return (
     <>
       <CourseSubNavbar courseId={params.courseId} />
-      <ClientCoursePage courseId={params.courseId} userId={userId} course={course} userRole="TEACHER" />
+
+      {/* Pagina principală client-side care afișează detaliile cursului */}
+      <ClientCoursePage
+        courseId={params.courseId} 
+        userId={userId} 
+        course={course} 
+        userRole="TEACHER"
+      />
     </>
   );
 };

@@ -1,4 +1,4 @@
-
+// Layout pentru paginile de autentificare: centrează conținutul pe ecran
 const AuthLayout = ({
     children
 }: {

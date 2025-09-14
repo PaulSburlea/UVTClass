@@ -37,6 +37,7 @@ export const ClassroomPeople: React.FC<ClassroomPeopleProps> = ({
   const { user } = useUser();
   const [current, setCurrent] = useState(students);
 
+  // Funcție pentru a elimina un student atât în backend, cât și local state
   async function handleRemove(sid: string) {
     const res = await fetch(`/api/courses/${courseId}/remove-student`, {
       method: "POST",
@@ -44,6 +45,7 @@ export const ClassroomPeople: React.FC<ClassroomPeopleProps> = ({
       body: JSON.stringify({ studentId: sid }),
     });
     if (res.ok) {
+      // Actualizăm lista locală fără studentul eliminat
       setCurrent((cs) => cs.filter((s) => s.id !== sid));
       toast.success("Student eliminat cu succes");
     } else {
@@ -51,11 +53,12 @@ export const ClassroomPeople: React.FC<ClassroomPeopleProps> = ({
     }
   }
 
-  return (
+    return (
     <div className="pt-4">
       <h2 className="text-xl font-semibold mb-2">Profesor</h2>
       <div className="flex items-center justify-between border-b py-3">
         <div className="flex items-center space-x-4">
+          {/* Avatar profesor */}
           {teacher.imageUrl && (
             <Image
               src={teacher.imageUrl}
@@ -69,7 +72,7 @@ export const ClassroomPeople: React.FC<ClassroomPeopleProps> = ({
             {teacher.firstName} {teacher.lastName}
           </span>
         </div>
-        {/* afișează mail doar dacă userul curent NU e profesorul însuși */}
+        {/* Link de email către profesor dacă nu este utilizatorul curent */}
         {user?.id !== teacher.id && teacher.email && (
           <Link
             href={`https://mail.google.com/mail/?view=cm&fs=1&to=${teacher.email}`}
@@ -89,6 +92,7 @@ export const ClassroomPeople: React.FC<ClassroomPeopleProps> = ({
           className="flex items-center justify-between border-b py-3"
         >
           <div className="flex items-center space-x-4">
+            {/* Avatar student */}
             {s.imageUrl && (
               <Image
                 src={s.imageUrl}
@@ -103,6 +107,7 @@ export const ClassroomPeople: React.FC<ClassroomPeopleProps> = ({
             </span>
           </div>
           <div className="flex items-center space-x-2">
+            {/* Link de email către student */}
             {s.email && (
               <Link
                 href={`https://mail.google.com/mail/?view=cm&fs=1&to=${s.email}`}
@@ -111,6 +116,7 @@ export const ClassroomPeople: React.FC<ClassroomPeopleProps> = ({
                 <Mail className="w-5 h-5 text-gray-600 hover:text-blue-600" />
               </Link>
             )}
+            {/* Buton de dropdown pentru eliminare, afișat doar dacă are permisiune */}
             {canRemove && (
               <DropdownMenu>
                 <DropdownMenuTrigger>

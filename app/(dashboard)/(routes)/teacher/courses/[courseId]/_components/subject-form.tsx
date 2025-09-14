@@ -9,6 +9,7 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+
 import type { Classroom } from "@/app/types/classroom";
 
 import {
@@ -27,6 +28,7 @@ interface SubjectFormProps {
   courseId: string;
 }
 
+// Schema pentru validarea câmpului "subject"
 const formSchema = z.object({
   subject: z.string().min(1, {
     message: "Subiectul este obligatoriu",
@@ -48,6 +50,7 @@ export const SubjectForm = ({ initialData, courseId }: SubjectFormProps) => {
 
   const { isSubmitting, isValid } = form.formState;
 
+  // Trimite PATCH pentru actualizarea subiectului cursului
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/courses/${courseId}`, values);
@@ -61,6 +64,7 @@ export const SubjectForm = ({ initialData, courseId }: SubjectFormProps) => {
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4 sm:p-6">
+      {/* Header secțiune cu buton de toggle edit */}
       <div className="font-medium flex items-center justify-between">
         <span className="text-base sm:text-lg">Subiectul cursului</span>
         <Button
@@ -84,6 +88,7 @@ export const SubjectForm = ({ initialData, courseId }: SubjectFormProps) => {
         </Button>
       </div>
 
+      {/* Afișare read-only când nu suntem în modul edit */}
       {!isEditing && (
         <p
           className={cn(
@@ -95,6 +100,7 @@ export const SubjectForm = ({ initialData, courseId }: SubjectFormProps) => {
         </p>
       )}
 
+      {/* Formular de editare când suntem în modul edit */}
       {isEditing && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
@@ -105,6 +111,7 @@ export const SubjectForm = ({ initialData, courseId }: SubjectFormProps) => {
                 <FormItem>
                   <FormControl>
                     <Input
+                      data-cy="input-subject"
                       className="w-full"
                       disabled={isSubmitting}
                       placeholder="Ex: Programare, Logică, Discuții..."

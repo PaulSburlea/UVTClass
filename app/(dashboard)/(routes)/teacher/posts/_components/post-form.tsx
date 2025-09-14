@@ -100,7 +100,8 @@ export function PostForm({
     fileInputRef.current?.click();
   };
 
-    const handleToggleOpen = () => {
+  // Togglează zona de postare și resetează câmpurile dacă se închide
+  const handleToggleOpen = () => {
     if (open) {
       setTitle("");
       setText("");
@@ -113,6 +114,7 @@ export function PostForm({
     setOpen((o) => !o);
   };
 
+  // Adaugă un link sau videoclip YouTube în preview ca ExternalFile
   const postExternalMaterial = (
     url: string,
     type: ExternalFile["__type"]
@@ -131,53 +133,55 @@ export function PostForm({
     setFilesPreview((prev) => [...prev, fakeFile]);
   };
 
-const handleTextPost = async () => {
-  if (!title.trim()) {
-    toast.error("Titlul este obligatoriu.");
-    return;
-  }
-  setIsUploading(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("courseId", courseId);
-    formData.append("title", title);
-    formData.append("content", text);
-
-    filesPreview.forEach((file) => {
-      if (isExternalFile(file)) {
-        formData.append("links", file.__url);
-        formData.append("types", file.__type);
-      } else {
-        formData.append("files", file);
-        formData.append("fileNames", file.name);
-      }
-    });
-
-    const response = await fetch("/api/post/create", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (response.ok) {
-      toast.success("Postarea a fost publicată cu succes!");
-      setTitle("");
-      setText("");
-      setFilesPreview([]);
-      setOpen(false);
-      onMaterialAdded?.();
-    } else {
-      toast.error("Eroare la salvare.");
+  // Trimite postarea cu titlu, text și fișiere/linkuri
+  const handleTextPost = async () => {
+    if (!title.trim()) {
+      toast.error("Titlul este obligatoriu.");
+      return;
     }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Eroare necunoscută";
-    toast.error("Eroare la încărcare: " + msg);
-  } finally {
-    setIsUploading(false);
-  }
-};
+    setIsUploading(true);
 
+    try {
+      const formData = new FormData();
+      formData.append("courseId", courseId);
+      formData.append("title", title);
+      formData.append("content", text);
 
+      filesPreview.forEach((file) => {
+        if (isExternalFile(file)) {
+          formData.append("links", file.__url);
+          formData.append("types", file.__type);
+        } else {
+          formData.append("files", file);
+          formData.append("fileNames", file.name);
+        }
+      });
+
+      const toSend = formData as any;
+      toSend.method = "POST";
+      toSend.body = formData;
+
+      const response = await fetch("/api/post/create", toSend);
+
+      if (response.ok) {
+        toast.success("Postarea a fost publicată cu succes!");
+        setTitle("");
+        setText("");
+        setFilesPreview([]);
+        setOpen(false);
+        onMaterialAdded?.();
+      } else {
+        toast.error("Eroare la salvare.");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Eroare necunoscută";
+      toast.error("Eroare la încărcare: " + msg);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Adaugă fișiere locale la preview, ignorând duplicatele
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -189,6 +193,7 @@ const handleTextPost = async () => {
     }
   };
 
+  // Elimină un fișier din preview
   const handleRemoveFile = (fileToRemove: PreviewFile) => {
     setFilesPreview((prev) => prev.filter((file) => file !== fileToRemove));
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -196,6 +201,7 @@ const handleTextPost = async () => {
 
   return (
     <div className="mt-4 w-full max-w-screen-lg">
+      {/* Butonul de deschidere/închidere a formularului */}
       <div
         className="p-4 border rounded-lg cursor-pointer bg-white hover:bg-gray-50"
         onClick={handleToggleOpen}
@@ -225,6 +231,7 @@ const handleTextPost = async () => {
             onChange={(e) => setText(e.target.value)}
           />
 
+          {/* Preview fișiere și linkuri */}
           {filesPreview.length > 0 && (
             <div className="mt-4 max-h-60 overflow-auto">
               <h3 className="font-semibold mb-2">Preview fișiere:</h3>
@@ -290,6 +297,8 @@ const handleTextPost = async () => {
                         type="button"
                         onClick={() => handleRemoveFile(file)}
                         className="text-gray-500 hover:text-gray-900"
+                        aria-label={`Șterge ${file.name}`}
+                        data-testid={`remove-${file.name}`}
                       >
                         <X size={18} />
                       </button>
@@ -300,6 +309,7 @@ const handleTextPost = async () => {
             </div>
           )}
 
+          {/* Acțiuni de încărcare și adăugare linkuri */}
           <div className="flex gap-3 flex-wrap">
             <input
               type="file"
@@ -307,6 +317,7 @@ const handleTextPost = async () => {
               ref={fileInputRef}
               className="hidden"
               onChange={handleFileChange}
+              data-testid="file-input"
             />
             <button
               type="button"
@@ -318,11 +329,12 @@ const handleTextPost = async () => {
               <Upload size={18} />
             </button>
 
-        <button
-          title="YouTube"
-          className="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center hover:bg-gray-100"
-          onClick={() => setYtModal(true)}
-        >
+          <button
+            data-testid="youtube-button"
+            title="YouTube"
+            className="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center hover:bg-gray-100"
+            onClick={() => setYtModal(true)}
+          >
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -351,6 +363,7 @@ const handleTextPost = async () => {
         </button>
 
             <button
+              data-testid="external-link-button"
               title="Link extern"
               className="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center hover:bg-gray-100"
               onClick={() => setLinkModal(true)}
@@ -359,6 +372,7 @@ const handleTextPost = async () => {
             </button>
           </div>
 
+          {/* Butonul Postează */}
           <div className="text-right">
             <button
               onClick={handleTextPost}

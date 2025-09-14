@@ -9,6 +9,7 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+
 import type { Classroom } from "@/app/types/classroom";
 
 import {
@@ -27,6 +28,7 @@ interface SectionFormProps {
   courseId: string;
 }
 
+// Schema Zod pentru validarea descrierii cursului
 const formSchema = z.object({
   section: z.string().min(1, {
     message: "Descrierea este obligatorie",
@@ -47,6 +49,7 @@ export const SectionForm = ({ initialData, courseId }: SectionFormProps) => {
 
   const { isSubmitting, isValid } = form.formState;
 
+  // Trimite PATCH pentru actualizarea descrierii
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/courses/${courseId}`, values);
@@ -60,6 +63,7 @@ export const SectionForm = ({ initialData, courseId }: SectionFormProps) => {
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4 sm:p-6">
+      {/* Header secțiune cu buton de toggle edit */}
       <div className="font-medium flex items-center justify-between">
         <span className="text-base sm:text-lg">Descrierea cursului</span>
         <Button
@@ -82,7 +86,7 @@ export const SectionForm = ({ initialData, courseId }: SectionFormProps) => {
           )}
         </Button>
       </div>
-
+      {/* Afișare read-only când nu e editare */}
       {!isEditing && (
         <p
           className={cn(
@@ -94,6 +98,7 @@ export const SectionForm = ({ initialData, courseId }: SectionFormProps) => {
         </p>
       )}
 
+      {/* Formular de editare */}
       {isEditing && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
@@ -104,6 +109,7 @@ export const SectionForm = ({ initialData, courseId }: SectionFormProps) => {
                 <FormItem>
                   <FormControl>
                     <Textarea
+                      data-cy="textarea-section"
                       className="w-full"
                       disabled={isSubmitting}
                       placeholder="Descrierea cursului"

@@ -1,4 +1,3 @@
-// app/(dashboard)/page.tsx
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -11,7 +10,7 @@ export default async function DashboardLanding() {
   const isAdmin = await db.admin.findUnique({ where: { userId } });
   if (isAdmin) return redirect("/admin");
 
-  // 2. teacher? (model global)
+  // 2. teacher?
   const isTeacher = await db.teacher.findUnique({ where: { userId } });
   if (isTeacher) return redirect("/teacher");
 

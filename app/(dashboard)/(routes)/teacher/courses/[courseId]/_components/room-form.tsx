@@ -9,6 +9,7 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+
 import type { Classroom } from "@/app/types/classroom";
 
 import {
@@ -27,6 +28,7 @@ interface RoomFormProps {
   courseId: string;
 }
 
+// Schema Zod pentru validarea câmpului "room"
 const formSchema = z.object({
   room: z.string().min(1, {
     message: "Sala este obligatorie",
@@ -48,6 +50,7 @@ export const RoomForm = ({ initialData, courseId }: RoomFormProps) => {
 
   const { isSubmitting, isValid } = form.formState;
 
+  // Trimitere PATCH pentru actualizarea sălii
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       await axios.patch(`/api/courses/${courseId}`, values);
@@ -61,6 +64,7 @@ export const RoomForm = ({ initialData, courseId }: RoomFormProps) => {
 
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4 sm:p-6">
+      {/* Header cu titlul secțiunii și butonul de toggle edit */}
       <div className="font-medium flex items-center justify-between">
         <span className="text-base sm:text-lg">Sala cursului</span>
         <Button
@@ -84,6 +88,7 @@ export const RoomForm = ({ initialData, courseId }: RoomFormProps) => {
         </Button>
       </div>
 
+      {/* Afișare read-only a sălii când nu suntem în modul edit */}
       {!isEditing && (
         <p
           className={cn(
@@ -95,6 +100,7 @@ export const RoomForm = ({ initialData, courseId }: RoomFormProps) => {
         </p>
       )}
 
+      {/* Formularul de editare a sălii */}
       {isEditing && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
@@ -105,6 +111,7 @@ export const RoomForm = ({ initialData, courseId }: RoomFormProps) => {
                 <FormItem>
                   <FormControl>
                     <Input
+                      data-cy="input-room"
                       className="w-full"
                       disabled={isSubmitting}
                       placeholder="Ex: A12, Sala 3, Online..."

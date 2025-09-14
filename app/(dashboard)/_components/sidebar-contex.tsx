@@ -1,7 +1,8 @@
-// app/(dashboard)/_context/sidebar-context.tsx
 "use client";
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+// Tipurile contextului pentru sidebar
 type SidebarContextType = {
   isSidebarOpen: boolean;
   setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -11,10 +12,12 @@ type SidebarContextType = {
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
+// Provider care gestionează starea sidebar-ului și adaptarea la lățimea ferestrei
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
 
+  // Setează automat sidebar-ul închis pe mobil (sub 640px)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -48,6 +51,7 @@ export const SidebarProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Hook custom pentru acces facil la contextul sidebar-ului
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
   if (!context) {

@@ -1,15 +1,15 @@
 "use client";
 
-import type { Classroom } from "@/app/types/classroom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import type { Classroom } from "@/app/types/classroom";
 
 interface CourseCardProps {
   course: Classroom;
-  currentUserId: string; // 👈 Adăugat
+  currentUserId: string;
 
 }
 
@@ -18,7 +18,7 @@ export default function CourseCard({ course }: CourseCardProps) {
 
   return (
     <div className="rounded-xl overflow-hidden shadow bg-white border w-full max-w-screen-lg">
-      {/* SECȚIUNEA PRINCIPALĂ, conținut aliniat jos, font mare și elegant */}
+      {/* Header curs cu titlu și buton info */}
       <div className="relative bg-gray-700 text-white min-h-[250px] p-6 pb-12 flex flex-col justify-end">
         <h1 className="text-5xl font font-serif leading-tight">
           {course.name}
@@ -27,7 +27,7 @@ export default function CourseCard({ course }: CourseCardProps) {
           <p className="text-2xl  mt-2 opacity-90">{course.section}</p>
         )}
 
-        {/* BUTON “i” fix în colțul dreapta‑jos al acestei secțiuni */}
+        {/* Toggle detalii */}
         <div className="absolute bottom-4 right-4">
           <Button
             size="icon"
@@ -41,7 +41,7 @@ export default function CourseCard({ course }: CourseCardProps) {
         </div>
       </div>
 
-      {/* ZONA EXTENSIBILĂ – albă, inițial ascunsă */}
+      {/* Secțiunea detalii, expandabilă */}
       <div
         className={cn(
           "overflow-hidden transition-[max-height] duration-300 ease-in-out",

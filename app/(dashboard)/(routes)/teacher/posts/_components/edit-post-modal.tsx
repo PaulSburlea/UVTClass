@@ -32,6 +32,7 @@ function isExternalFile(file: PreviewFile): file is ExternalFile {
   return (file as ExternalFile).__external === true;
 }
 
+// Alege iconița și background după mime-type
 function getFileIconAndColor(mime: string) {
   if (mime.startsWith("image/")) {
     return { icon: null, bg: "" };
@@ -116,6 +117,7 @@ export function EditPostModal({
   const [modalUrl, setModalUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Când se deschide, mapăm materialele din DB la PreviewFile
   useEffect(() => {
     if (!isOpen) return;
 
@@ -129,13 +131,14 @@ export function EditPostModal({
       const fake = new File([""], originalFilename) as ExternalFile;
       fake.__external = m.type !== "FILE";
       fake.__type = m.type as ExternalFile["__type"];
-      fake.__url = m.url!;
+      fake.__url = m.type === "FILE" ? m.filePath! : m.url!;
       fake.__id = m.id;
       return fake;
     });
     setFilesPreview(mapped);
   }, [isOpen, post]);
 
+  // Pentru link-urile externe, aducem thumbnail
   useEffect(() => {
     filesPreview.forEach((f) => {
       if (
@@ -146,36 +149,25 @@ export function EditPostModal({
       ) {
         fetch(`/api/get-title?url=${encodeURIComponent(f.__url)}`)
           .then((r) => r.json())
-          .then((data) => {
-            setLinkPreviews((p) => ({
-              ...p,
-              [f.name]: { image: data.image },
-            }));
-          })
-          .catch(() => {
-          });
+          .then((data) => setLinkPreviews((p) => ({...p, [f.name]: { image: data.image } })))
+          .catch(() => {});
       }
     });
   }, [filesPreview, linkPreviews]);
 
+  // Șterge din preview și marchează ID-urile de DB pentru eliminare
   const handleRemoveFile = async (fileToRemove: PreviewFile) => {
     setFilesPreview((prev) => prev.filter((f) => f !== fileToRemove));
 
-  const maybeId = (fileToRemove as ExternalFile).__id;
-  if (maybeId) {
-    setRemovedIds((prev) => [...prev, maybeId]);
-  }
+    const maybeId = (fileToRemove as ExternalFile).__id;
+    if (maybeId) {
+      setRemovedIds((prev) => [...prev, maybeId]);
+    }
 
-    if (
-      !isExternalFile(fileToRemove) &&
-      "__url" in (fileToRemove as ExternalFile)
-    ) {
+    const fileUrl = (fileToRemove as ExternalFile).__url;
+    if (!isExternalFile(fileToRemove) && fileUrl) {
       try {
-        const fileUrl = (fileToRemove as ExternalFile).__url;
-        const urlObj = new URL(fileUrl);
-        const lastSegment = urlObj.pathname.split("/").pop()!;
-        const raw = lastSegment.split("?")[0];
-        const fileKey = raw.split("-")[0];
+        const fileKey = fileUrl.split("/")[0];
         if (fileKey) {
           const res = await fetch("/api/delete-uploadthing-file", {
             method: "POST",
@@ -188,7 +180,7 @@ export function EditPostModal({
           }
         }
       } catch (err) {
-        console.error("Eroare la extragerea sau ștergerea UTapi:", err);
+        console.error("Eroare la ștergerea fișierului din UploadThing:", err);
         toast.error("Eroare la ștergerea fișierului.");
       }
     }
@@ -196,6 +188,7 @@ export function EditPostModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Adaugă link sau YouTube ca ExternalFile
   const postExternalMaterial = (
     url: string,
     type: ExternalFile["__type"]
@@ -215,6 +208,7 @@ export function EditPostModal({
     setModalUrl("");
   };
 
+  // Salvează: construiește FormData din stări și trimite PUT
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error("Titlul este obligatoriu.");
@@ -228,7 +222,8 @@ export function EditPostModal({
     removedIds.forEach((id) => form.append("removedIds", id));
 
     filesPreview.forEach((f) => {
-      const hasId = (f as ExternalFile).__id !== undefined && (f as ExternalFile).__id !== null;
+      const hasId =
+        (f as ExternalFile).__id !== undefined && (f as ExternalFile).__id !== null;
       const isExt = isExternalFile(f);
 
       if (isExt) {
@@ -260,6 +255,7 @@ export function EditPostModal({
     }
   };
 
+  // Când alegem fișiere noi
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -300,6 +296,7 @@ export function EditPostModal({
             placeholder="Conținutul (opțional)"
           />
 
+          {/* Preview fișiere */}
           {filesPreview.length > 0 && (
             <div className="mt-2 max-h-60 overflow-y-auto">
               <h3 className="font-semibold mb-2">Preview fișiere:</h3>
@@ -409,6 +406,7 @@ export function EditPostModal({
                         </div>
                       </div>
                       <button
+                        data-testid="close-icon"
                         type="button"
                         onClick={() => handleRemoveFile(file)}
                         className="text-gray-500 hover:text-gray-900 ml-2"
@@ -421,8 +419,11 @@ export function EditPostModal({
               </ul>
             </div>
           )}
+
+          {/* Acțiuni adăugare */}
           <div className="flex flex-wrap gap-3 mt-4">
             <input
+              data-testid="file-input"
               type="file"
               ref={fileInputRef}
               className="hidden"
@@ -440,6 +441,7 @@ export function EditPostModal({
             </button>
 
             <button
+              data-testid="youtube-button"
               title="YouTube"
               className="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center hover:bg-gray-100"
               onClick={() => {
@@ -490,6 +492,7 @@ export function EditPostModal({
             </button>
           </div>
 
+          {/* Salvează */}
           <div className="text-right mt-4">
             <button
               onClick={handleSave}
@@ -552,8 +555,7 @@ export function EditPostModal({
           <div className="text-right space-x-2">
             <button
               onClick={() => {
-                if (modalUrl.trim())
-                  postExternalMaterial(modalUrl.trim(), "LINK");
+                if (modalUrl.trim()) postExternalMaterial(modalUrl.trim(), "LINK");
                 setLinkModal(false);
               }}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

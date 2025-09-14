@@ -1,13 +1,11 @@
-// app/student/grades/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 interface EnrolledCourse {
   id: string;
@@ -21,6 +19,7 @@ export default function StudentGradesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
+  // Preia lista de cursuri la montarea componentei
   useEffect(() => {
     if (!user?.id) return;
     fetch("/api/student/courses")
@@ -36,6 +35,7 @@ export default function StudentGradesPage() {
       .finally(() => setLoading(false));
   }, [user?.id]);
 
+  // Actualizează lista filtrată când se schimbă căutarea sau cursurile
   useEffect(() => {
     const q = search.trim().toLowerCase();
     setFiltered(
@@ -49,6 +49,7 @@ export default function StudentGradesPage() {
   if (filtered.length === 0) {
     return (
       <div className="max-w-lg mx-auto mt-12 text-center text-gray-500">
+        {/* Căutare pentru cazul fără rezultate */}
         <Input
           placeholder="Caută curs…"
           value={search}
@@ -62,28 +63,30 @@ export default function StudentGradesPage() {
 
   return (
     <div className="max-w-3xl mx-auto mt-8 space-y-4">
-    <Input
-        placeholder="Caută curs…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mb-5"
-    />
-
-    <ul className="divide-y divide-gray-200 bg-white rounded-2xl shadow-md overflow-hidden">
-        {filtered.map((course) => (
-        <li
-            key={course.id}
-            className="flex items-center justify-between px-8 py-5 hover:bg-gray-50 transition"
-        >
-            <Link href={`/student/grades/${course.id}`} className="flex-1">
-            <span className="text-gray-900 text-lg font-semibold">
-                {course.name}
-            </span>
-            </Link>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-        </li>
-        ))}
-    </ul>
+    {/* Bară de căutare */}
+      <Input
+          placeholder="Caută curs…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mb-5"
+      />
+      {/* Listă de cursuri înscrise */}
+      <ul className="divide-y divide-gray-200 bg-white rounded-2xl shadow-md overflow-hidden">
+          {filtered.map((course) => (
+          <li
+              key={course.id}
+              className="flex items-center justify-between px-8 py-5 hover:bg-gray-50 transition"
+          >
+              {/* Link către pagina de note a cursului */}
+              <Link href={`/student/grades/${course.id}`} className="flex-1">
+                <span className="text-gray-900 text-lg font-semibold">
+                    {course.name}
+                </span>
+              </Link>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+          </li>
+          ))}
+      </ul>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-// app/(dashboard)/(routes)/_components/sidebar-routes.tsx
 "use client";
 
 import React from "react";
@@ -16,8 +15,10 @@ import Link from "next/link";
 
 import type { Classroom } from "@/app/types/classroom";
 
+// Funcția folosită de SWR pentru a face fetch la date JSON
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+// Returnează o culoare dintr-un set predefinit pe baza primei litere a numelui cursului
 const getColorForCourse = (name: string) => {
   const colors = [
     "bg-red-500",
@@ -46,9 +47,12 @@ export const SidebarRoutes = ({
   closeSheet,
 }: SidebarRoutesProps) => {
   const pathname = usePathname();
+
+  // Detectăm dacă suntem pe pagina profesorului sau studentului după URL
   const isTeacherPage = pathname.includes("/teacher");
   const isStudentPage = pathname.includes("/student");
 
+  // SWR face fetch la lista de cursuri în funcție de rolul utilizatorului
   const { data: teachingCourses = [] } = useSWR<Classroom[]>(
     isTeacherPage ? "/api/courses" : null,
     fetcher
@@ -58,9 +62,11 @@ export const SidebarRoutes = ({
     fetcher
   );
 
+  // Stările locale pentru a deschide/închide grupurile de cursuri expandabile
   const [isTeachingOpen, setIsTeachingOpen] = useState(true);
   const [isEnrolledOpen, setIsEnrolledOpen] = useState(true);
 
+  // Dacă sidebar-ul se închide, resetăm grupurile expandate la deschis
   useEffect(() => {
     if (!isSidebarOpen) {
       setIsTeachingOpen(true);
@@ -68,6 +74,7 @@ export const SidebarRoutes = ({
     }
   }, [isSidebarOpen]);
 
+  // Rute principale comune: Acasă și Catalog, cu variante pentru profesor sau student
   const homeRoute = {
     icon: House,
     label: "Acasă",
@@ -90,6 +97,7 @@ export const SidebarRoutes = ({
     { icon: GraduationCap, label: "Catalog", href: "/grades" },
   ];
 
+  // Funcție care se ocupă de click pe link-uri și eventual închide sheet-ul dacă există
   const handleClickFactory =
     (originalOnClick?: () => void) => () => {
       if (originalOnClick) {
@@ -102,6 +110,7 @@ export const SidebarRoutes = ({
 
   return (
     <div className="flex flex-col w-full">
+      {/* Render rutele principale în funcție de rol */}
       {(isTeacherPage
         ? teacherMain
         : isStudentPage
@@ -123,10 +132,12 @@ export const SidebarRoutes = ({
         </Link>
       ))}
 
+      {/* Dacă suntem profesor, afișăm secțiunea de cursuri la care predă */}
       {isTeacherPage && (
         <>
           <hr className="border-t border-gray-300 my-2" />
 
+          {/* Item expandabil pentru cursurile la care predă */}
           <Link
             href="#"
             onClick={handleClickFactory(() => setIsTeachingOpen((o) => !o))}
@@ -149,6 +160,7 @@ export const SidebarRoutes = ({
             />
           </Link>
 
+          {/* Listarea cursurilor efectiv, afișate doar dacă sidebar-ul e extins și secțiunea e deschisă */}
           {isTeachingOpen &&
             (isSidebarOpen || isSidebarHovered) &&
             teachingCourses.map((c) => (
@@ -178,10 +190,12 @@ export const SidebarRoutes = ({
         </>
       )}
 
+      {/* Dacă suntem student, afișăm secțiunea de cursuri la care e înscris */}
       {isStudentPage && (
         <>
           <hr className="border-t border-gray-300 my-2" />
 
+          {/* Item expandabil pentru cursurile la care e înscris */}
           <Link
             href="#"
             onClick={handleClickFactory(() => setIsEnrolledOpen((o) => !o))}
@@ -204,6 +218,7 @@ export const SidebarRoutes = ({
             />
           </Link>
 
+          {/* Listarea cursurilor în care studentul e înscris */}
           {isEnrolledOpen &&
             (isSidebarOpen || isSidebarHovered) &&
             enrolledCourses.map((c) => (

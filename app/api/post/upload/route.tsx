@@ -1,5 +1,3 @@
-// frontend/app/api/post/upload/route.ts
-
 import { NextResponse } from "next/server";
 import { utapi }        from "@/server/uploadthing";
 
@@ -12,6 +10,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Upload fișier folosind UploadThing API
     const results = await utapi.uploadFiles([file]);
     const res = results[0];
     if (res.error || !res.data) {

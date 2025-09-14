@@ -1,5 +1,3 @@
-// app/(dashboard)/(routes)/teacher/grades/[courseId]/[studentId]/page.tsx
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -7,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
+
 import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
 
 import type { GradeCategory } from "@/app/types/grade";
@@ -26,6 +25,7 @@ interface Classroom {
   section?: string;
 }
 
+// Etichete și stiluri pentru categorii de note
 const categoryLabels: Record<GradeCategory, string> = {
   EXAM: "Examen",
   QUIZ: "Test",
@@ -49,9 +49,11 @@ export default function StudentCourseGradesPage() {
   const [course, setCourse] = useState<Classroom | null>(null);
   const [search, setSearch] = useState("");
 
+  // Extrage ID-ul cursului din parametrii URL
   const rawId = params.courseId;
   const courseId = Array.isArray(rawId) ? rawId[0] : rawId;
 
+  // Fetch detalii curs la montare sau când courseId se schimbă
   useEffect(() => {
     if (!courseId) return;
     fetch(`/api/classrooms/${courseId}`)
@@ -63,6 +65,7 @@ export default function StudentCourseGradesPage() {
       .catch(() => toast.error("Eroare la încărcarea detaliilor cursului"));
   }, [courseId]);
 
+  // Fetch note student după ce user și courseId sunt disponibile
   useEffect(() => {
     if (!isLoaded || !user?.id || !courseId) return;
     fetch(`/api/grades?courseId=${courseId}&studentId=${user.id}`)
@@ -71,6 +74,7 @@ export default function StudentCourseGradesPage() {
         return res.json();
       })
       .then((data: GradeEntry[]) => {
+        // Transformă datele pentru a avea formatul corect
         setEntries(
           data.map((g) => ({
             ...g,
@@ -83,6 +87,7 @@ export default function StudentCourseGradesPage() {
       .catch(() => toast.error("Eroare la încărcarea notelor"));
   }, [isLoaded, user?.id, courseId]);
 
+  // Filtrează după textul căutat
   const filtered = useMemo(
     () =>
       entries.filter((e) =>
@@ -91,6 +96,7 @@ export default function StudentCourseGradesPage() {
     [search, entries]
   );
 
+  // Calculează suma ponderilor și media ponderată
   const totalWeight = useMemo(
     () => filtered.reduce((sum, e) => sum + e.weight, 0),
     [filtered]
@@ -114,11 +120,13 @@ export default function StudentCourseGradesPage() {
 
   return (
     <>
+      {/* Navbar specific cursului */}   
       <CourseSubNavbar courseId={courseId} />
 
       <div className="max-w-4xl mx-auto pt-[116px] px-4 md:px-0">
         <h1 className="text-3xl font-semibold mb-4">{course.name}</h1>
 
+        {/* Bara de căutare și afișarea mediei ponderate */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <Input
             placeholder="Caută evaluare..."
@@ -136,6 +144,7 @@ export default function StudentCourseGradesPage() {
           </div>
         </div>
 
+        {/* Tabel desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -172,6 +181,7 @@ export default function StudentCourseGradesPage() {
           </table>
         </div>
 
+        {/* Vizualizare mobil */}
         <div className="md:hidden space-y-4">
           {filtered.map((e, i) => (
             <div
