@@ -10,12 +10,14 @@ export async function GET() {
     const { userId } = await auth();
     if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
+    // Preluăm relațiile userClassroom pentru utilizator, incluzând datele despre classroom
     const rels = await db.userClassroom.findMany({
       where: { userId },
       include: { classroom: true },
       orderBy: { createdAt: "desc" },
     });
 
+    // Extragem doar obiectele Classroom din relații
     const courses = rels.map(
       (r: UserClassroom & { classroom: Classroom }) => r.classroom
     );

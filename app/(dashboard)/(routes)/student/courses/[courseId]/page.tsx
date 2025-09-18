@@ -1,8 +1,7 @@
-// frontend/app/(dashboard)/(routes)/student/courses/[courseId]/page.tsx
-
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+
 import { CourseSubNavbar } from "@/app/(dashboard)/_components/course-sub-navbar";
 import CourseCard from "../../../teacher/courses/[courseId]/_components/course-info";
 import PostListWrapper from "./_components/post-list-wrapper";
@@ -18,11 +17,13 @@ const StudentCoursePage = async ({ params }: CourseIdPageProps) => {
   const { userId } = await auth();
   if (!userId) return redirect("/");
 
+  // Verifică dacă utilizatorul este înscris în curs
   const enrollment = await db.userClassroom.findFirst({
     where: { classroomId: courseId, userId },
   });
   if (!enrollment) return redirect("/student/courses");
 
+  // Încarcă datele cursului
   const course = await db.classroom.findUnique({ where: { id: courseId } });
   if (!course) return redirect("/student/courses");
 
@@ -30,13 +31,19 @@ const StudentCoursePage = async ({ params }: CourseIdPageProps) => {
 
   return (
     <>
+      {/* Sub-navbar pentru navigarea între secțiuni curs */}
       <CourseSubNavbar courseId={courseId} />
 
       <div className="pt-[50px] px-4 sm:px-6 lg:px-20 flex flex-col items-center">
+        {/* Informații generale despre curs */}
         <div className="w-full max-w-3xl">
-          <CourseCard course={course} currentUserId={userId} />
+          <CourseCard 
+            course={course}
+            currentUserId={userId}
+          />
         </div>
 
+        {/* Listă de postări legate de curs */}
         <div className="w-full max-w-3xl mt-6">
           <PostListWrapper
             courseId={courseId}

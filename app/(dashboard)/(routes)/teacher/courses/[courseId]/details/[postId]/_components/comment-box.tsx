@@ -4,7 +4,6 @@ import { useRef, useState, useEffect, useTransition } from "react";
 import Image from "next/image";
 import { SendHorizontal } from "lucide-react";
 
-// Tipul complet Comment — poate fi mutat într-un fișier separat de tipuri
 export interface Comment {
   id: string;
   content: string;
@@ -39,7 +38,7 @@ export function CommentBox({
   const [isPending, startTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Setează valoarea în textarea când se schimbă commentToEdit sau replyTo
+  // Inițializează valoarea textarea la răspuns sau edit
   useEffect(() => {
     if (replyTo) {
       setValue(`${replyTo.authorEmail} `);
@@ -50,7 +49,7 @@ export function CommentBox({
     }
   }, [replyTo, commentToEdit]);
 
-  // Ajustează înălțimea textarea-ului
+  // Ajustează înălțimea textarea pe baza conținutului
   useEffect(() => {
     const ta = textareaRef.current;
     if (ta) {
@@ -59,11 +58,13 @@ export function CommentBox({
     }
   }, [value]);
 
+  // Trimite POST sau PATCH în funcție de context (edit sau nou)
   const handleSubmit = async () => {
     if (!value.trim()) return;
 
     try {
       if (commentToEdit) {
+        // Actualizare comentariu existent
         await fetch(`/api/comments/${commentToEdit.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -74,9 +75,10 @@ export function CommentBox({
           ...commentToEdit,
           content: value,
         });
-
+        setValue("");
         onEditDone?.();
       } else {
+        // Adăugare comentariu nou sau răspuns
         await fetch("/api/comments", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -98,6 +100,7 @@ export function CommentBox({
 
   return (
     <div className="flex items-start gap-3 mt-4">
+      {/* Avatar utilizator */}
       <Image
         src={avatarUrl}
         alt="Avatar"
@@ -105,8 +108,10 @@ export function CommentBox({
         height={32}
         className="rounded-full object-cover"
       />
+
       <div className="flex flex-1 items-start gap-2">
         <div className="flex-1">
+          {/* Banner pentru răspuns */}
           {replyTo && (
             <div className="bg-blue-100 text-blue-800 px-3 py-1 text-sm rounded-t-md mb-1 flex justify-between items-center">
               <span>
@@ -120,6 +125,8 @@ export function CommentBox({
               </button>
             </div>
           )}
+
+          {/* Textarea pentru comentariu/edit */}
           <textarea
             ref={textareaRef}
             placeholder={
@@ -131,6 +138,8 @@ export function CommentBox({
             className="w-full resize-none overflow-hidden border border-gray-300 rounded-2xl px-4 py-2 text-sm focus:outline-none"
           />
         </div>
+
+        {/* Buton de trimitere */}
         <button
           type="button"
           onClick={() => startTransition(handleSubmit)}

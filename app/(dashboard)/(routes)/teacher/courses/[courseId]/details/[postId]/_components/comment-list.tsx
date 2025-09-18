@@ -15,11 +15,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+
 import { ConfirmModal } from "@/components/confirm-modal";
 import { CommentBox } from "./comment-box";
 import { useIsTeacher } from "@/lib/use-is-teacher";
 
-// Format dată românește
+// Formatează data pentru afișare în interfața utilizator (azi: HH:mm, altfel: d MMM)
 function formatDateDisplay(date: Date) {
   return isToday(date)
     ? format(date, "HH:mm", { locale: ro })
@@ -65,15 +66,19 @@ export function CommentList({
   const { user } = useUser();
   const userId = user?.id;
   const isTeacher = useIsTeacher(classroomId);
+
+  // Stări locale pentru workflow-ul de răspuns și ștergere
   const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
   const [commentToDelete, setCommentToDelete] = useState<Comment | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [localComments, setLocalComments] = useState<Comment[]>(comments);
 
+  // Sincronizează starea locală dacă props.comments se schimbă
   useEffect(() => {
   setLocalComments(comments);
 }, [comments]);
 
+  // Șterge comentariul selectat prin API și notifică rezultatul
   const handleDelete = async () => {
     if (!commentToDelete) return;
 
@@ -92,23 +97,24 @@ export function CommentList({
     setIsConfirmOpen(false);
   };
 
+  // Actualizează un comentariu existent în state-ul local după edit
   const handleCommentUpdated = (updatedComment: Comment) => {
-  const updateComments = (comments: Comment[]): Comment[] => {
-    return comments.map(c => {
-      if (c.id === updatedComment.id) {
-        return { ...c, ...updatedComment };
-      } else if (c.replies) {
-        return { ...c, replies: updateComments(c.replies) };
-      }
-      return c;
-    });
-  };
+    const updateComments = (comments: Comment[]): Comment[] => {
+      return comments.map(c => {
+        if (c.id === updatedComment.id) {
+          return { ...c, ...updatedComment };
+        } else if (c.replies) {
+          return { ...c, replies: updateComments(c.replies) };
+        }
+        return c;
+      });
+    };
 
   setLocalComments(prev => updateComments(prev));
   setCommentToEdit(null);
 };
 
-
+  // Când se apasă butonul de răspuns, preia email-ul autorului comentariului
   const handleReplyClick = async (c: Comment) => {
     if (!c.authorId) return;
     try {
@@ -126,6 +132,7 @@ export function CommentList({
     }
   };
 
+  // Renderizează recursiv un comentariu și eventualele răspunsuri cu indentare
   const renderComment = (c: Comment, depth = 0) => {
     const isEditing = commentToEdit?.id === c.id;
     const canEdit = c.authorId === userId;
@@ -134,6 +141,7 @@ export function CommentList({
     return (
       <div key={c.id} className={depth > 0 ? "ml-8" : ""}>
         <div className={`border p-3 rounded-md mb-2 ${isEditing ? "border-blue-500 bg-blue-50" : ""}`}>
+          {/* Avatar și date de autor */}
           <div className="flex items-start gap-3">
             <Image
               src={c.authorAvatar ?? "/default-avatar.png"}
@@ -157,6 +165,7 @@ export function CommentList({
                   </div>
                 </div>
 
+                {/* Meniu de acțiuni: Edit, Delete, Reply */}
                 <div className="flex items-center gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -190,6 +199,7 @@ export function CommentList({
                 </div>
               </div>
 
+              {/* Conținutul comentariului sau buton de anulare editare */}
               {!isEditing ? (
                 <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">{c.content}</p>
               ) : (
@@ -217,6 +227,7 @@ export function CommentList({
           />
         )}
 
+        {/* Răspunsurile în mod recursiv */}
         {Array.isArray(c.replies) && c.replies.map((r) => renderComment(r, depth + 1))}
       </div>
     );
@@ -224,8 +235,10 @@ export function CommentList({
 
   return (
     <div className="space-y-6">
+      {/* Lista comentariilor principale */}
       {localComments.map((c) => renderComment(c))}
 
+      {/* Caseta de comentariu nou în afara unei ținte de răspuns */}
       {!replyTarget && (
         <CommentBox
           avatarUrl={user?.imageUrl ?? "/default-avatar.png"}
@@ -236,6 +249,7 @@ export function CommentList({
         />
       )}
 
+      {/* Modal de confirmare ștergere */}
       <ConfirmModal
         isOpen={isConfirmOpen}
         onCancel={() => {

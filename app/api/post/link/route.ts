@@ -1,5 +1,3 @@
-// frontend/app/api/post/create/route.ts
-
 import { auth }           from "@clerk/nextjs/server";
 import { db }             from "@/lib/db";
 import { NextResponse }   from "next/server";
@@ -7,7 +5,7 @@ import { v4 as uuidv4 }   from "uuid";
 import { writeFile }      from "fs/promises";
 import path               from "path";
 
-import type { MaterialType } from "@/app/types/material"; // folosim tipurile tale custom
+import type { MaterialType } from "@/app/types/material";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -19,7 +17,6 @@ export async function POST(req: Request) {
   const title      = formData.get("title") as string;
   const typeString = formData.get("type") as string;
 
-  // Validăm că typeString este unul dintre valorile permise; altfel fallback la "LINK"
   let type = (typeString as MaterialType);
   if (!["FILE", "YOUTUBE", "DRIVE", "LINK"].includes(type)) {
     type = "LINK";
@@ -46,7 +43,7 @@ export async function POST(req: Request) {
       data: {
         title:  "Link",
         name:   url,
-        type,       // tipul validat mai sus: "YOUTUBE" | "DRIVE" | "LINK" sau fallback "LINK"
+        type,    
         url,
         postId: post.id,
       },
@@ -67,7 +64,7 @@ export async function POST(req: Request) {
       data: {
         title:    file.name,
         name:     file.name,
-        type:     "FILE",                // pentru fișiere setăm direct "FILE"
+        type:     "FILE",
         filePath: `/uploads/${fileName}`,
         postId:   post.id,
       },

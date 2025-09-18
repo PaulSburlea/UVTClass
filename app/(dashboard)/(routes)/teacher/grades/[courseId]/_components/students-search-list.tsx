@@ -1,5 +1,3 @@
-// frontend/app/(dashboard)/(routes)/teacher/grades/[courseId]/_components/StudentsSearchList.tsx
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -20,13 +18,17 @@ interface StudentsSearchListProps {
 export default function StudentsSearchList({ students, courseId }: StudentsSearchListProps) {
   const [query, setQuery] = useState("");
 
-  // Sortează alfabetic înainte de filtrare
+
+  // Sortăm studenții alfabetic (folosind localeCompare pentru diacritice etc.)
+  // Memoizăm lista sortată pentru a nu reordona la fiecare render
   const sortedStudents = useMemo(() => {
     return [...students].sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
     );
   }, [students]);
 
+  // Filtrăm lista sortată pe baza query-ului (nume sau ID)
+  // Tot memorizat pentru eficiență
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return sortedStudents.filter(
@@ -36,7 +38,7 @@ export default function StudentsSearchList({ students, courseId }: StudentsSearc
 
   return (
     <div className="space-y-4">
-      {/* Search bar */}
+      {/* Căsuța de input cu iconiță de search */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <Input
@@ -48,10 +50,14 @@ export default function StudentsSearchList({ students, courseId }: StudentsSearc
         />
       </div>
 
-      {/* Lista studenți */}
+      {/* Lista filtrată */}
       <ul className="divide-y border-t border-b border-gray-200">
         {filtered.map((s) => (
-          <li key={s.id} className="py-3 px-2 hover:bg-gray-50 transition">
+          <li
+            key={s.id}
+            className="py-3 px-2 hover:bg-gray-50 transition"
+          >
+            {/* Link către pagina de note a studentului */}
             <Link
               href={`/teacher/grades/${courseId}/${s.id}`}
               className="flex justify-between items-center text-gray-700 hover:text-blue-600 transition"
@@ -61,8 +67,11 @@ export default function StudentsSearchList({ students, courseId }: StudentsSearc
             </Link>
           </li>
         ))}
+        {/* Mesaj când nu există rezultate */}
         {filtered.length === 0 && (
-          <li className="py-3 text-gray-500 italic">Niciun student găsit.</li>
+          <li className="py-3 text-gray-500 italic">
+            Niciun student găsit.
+          </li>
         )}
       </ul>
     </div>

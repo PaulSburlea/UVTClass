@@ -4,11 +4,15 @@ import * as cheerio from "cheerio";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const url = searchParams.get("url");
-  if (!url) return NextResponse.json({ error: "Missing URL" }, { status: 400 });
+  // Returnăm eroare dacă lipsește parametrul URL
+  if (!url) 
+    return NextResponse.json({ error: "Missing URL" }, { status: 400 });
 
   try {
+    // Facem fetch către URL-ul furnizat
     const res = await fetch(url);
     const html = await res.text();
+    // Încarcăm HTML-ul în Cheerio pentru parsare
     const $ = cheerio.load(html);
 
     const getMeta = (prop: string) =>

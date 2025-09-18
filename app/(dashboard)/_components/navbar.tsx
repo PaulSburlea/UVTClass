@@ -13,6 +13,7 @@ export const Navbar = () => {
   const [hasShadow, setHasShadow] = useState(false);
   const { setIsSidebarOpen } = useSidebar();
 
+  // Adaugă umbră navbar-ului la scroll pentru un efect vizual subtil
   useEffect(() => {
     const handleScroll = () => {
       setHasShadow(window.scrollY > 0);
@@ -27,32 +28,36 @@ export const Navbar = () => {
         hasShadow ? "shadow-md" : "shadow-none"
       }`}
     >
-    <div className="flex items-center gap-x-4">
-      <div className="md:hidden">
-        <MobileSidebar />
+      <div className="flex items-center gap-x-4">
+        {/* Sidebar mobil (afișat doar pe ecrane mici) */}
+        <div className="md:hidden">
+          <MobileSidebar />
+        </div>
+
+        {/* Buton pentru deschiderea sidebar-ului pe desktop */}
+        <div className="hidden md:block">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            onClick={() => setIsSidebarOpen((prev) => !prev)}
+          >
+            <Menu className="!h-6 !w-6 text-[#5F6368]" />
+          </Button>
+        </div>
+
+        {/* Branding cu logo și titlu aplicație */}
+        <Link href="/">
+          <Button variant="ghost" className="hover:bg-transparent flex items-center gap-2">
+            <Logo />
+            <span className="font-sans text-[24px] font-normal leading-7 text-[#5F6368] hover:text-[#2D71B7] hover:underline">
+              UVT Class
+            </span>
+          </Button>
+        </Link>
       </div>
 
-      <div className="hidden md:block">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="rounded-full"
-          onClick={() => setIsSidebarOpen((prev) => !prev)}
-        >
-          <Menu className="!h-6 !w-6 text-[#5F6368]" />
-        </Button>
-      </div>
-
-      <Link href="/">
-        <Button variant="ghost" className="hover:bg-transparent flex items-center gap-2">
-          <Logo />
-          <span className="font-sans text-[24px] font-normal leading-7 text-[#5F6368] hover:text-[#2D71B7] hover:underline">
-            UVT Class
-          </span>
-        </Button>
-      </Link>
-    </div>
-
+      {/* Rutele principale din navbar) */}
       <NavbarRoutes />
     </div>
   );

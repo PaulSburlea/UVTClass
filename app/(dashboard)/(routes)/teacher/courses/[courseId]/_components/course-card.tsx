@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { mutate } from "swr";
+
 import { ConfirmModal } from "@/components/confirm-modal";
 
 import type { Classroom } from "@/app/types/classroom";
@@ -27,6 +28,7 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Alege un gradient de background bazat pe hash-ul ID-ului
   const [bgGradient] = useState(() => {
     const hash = course.id
       .split("")
@@ -36,6 +38,7 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
 
   const isOwner = currentUserId === course.userId;
 
+  // Navighează către pagina cursului, diferit pentru rol
   const goToCourse = () => {
     const destination = isOwner
       ? `/teacher/courses/${course.id}`
@@ -43,6 +46,8 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
     router.push(destination);
   };
 
+  // Funcții pentru editare și ștergere
+  // Acestea sunt apelate la click pe butoanele corespunzătoare
   const onEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     router.push(`/teacher/courses/${course.id}/edit`);
@@ -53,6 +58,7 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
     setShowConfirm(true);
   };
 
+  // Șterge cursul prin API și reîmprospătează lista
   const handleConfirmDelete = async () => {
     try {
       const res = await fetch(`/api/courses/${course.id}`, {
@@ -79,6 +85,7 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
           "hover:shadow-xl hover:-translate-y-1 hover:scale-[1.01] transform duration-200 ease-in-out"
         )}
       >
+        {/* Header cu nume și secțiune, cu gradient dinamic */}
         <div className={cn("p-4 text-slate-100", bgGradient)}>
           <h2 className="text-xl font-semibold leading-snug">{course.name}</h2>
           <p className="text-sm opacity-90 mt-1">
@@ -86,6 +93,7 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
           </p>
         </div>
 
+        {/* Zona de acțiuni, vizibilă doar owner-ului la hover */}
         <div className="p-4 bg-white flex flex-col gap-2">
           {isOwner && (
             <div
@@ -112,6 +120,7 @@ export const CourseCard = ({ course, currentUserId }: CourseCardProps) => {
         </div>
       </div>
 
+      {/* Modal de confirmare pentru ștergere */}
       {isOwner && (
         <ConfirmModal
           isOpen={showConfirm}

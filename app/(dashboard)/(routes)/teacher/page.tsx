@@ -1,7 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { TeacherDashboard } from "./courses/[courseId]/_components/teacher-dashboard";
 import { db } from "@/lib/db";
+
+import { TeacherDashboard } from "./courses/[courseId]/_components/teacher-dashboard";
+
 
 const TeacherPage = async () => {
   const { userId } = await auth();

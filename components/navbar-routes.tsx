@@ -43,7 +43,8 @@ export const NavbarRoutes = () => {
         <div className="flex gap-x-3 ml-auto">
             {/* Dropdown cu acțiuni */}
             <div className="relative" ref={dropdownRef}>
-                <Button
+                <Button data-testid="plus-button"
+                    aria-label="Adaugă curs"
                     ref={buttonRef}
                     size="icon"
                     variant="ghost"

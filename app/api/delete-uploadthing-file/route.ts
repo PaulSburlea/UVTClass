@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { utapi } from "@/server/uploadthing";
 
+// Endpoint pentru ștergerea unui fișier prin UploadThing API, pe baza unui fileKey furnizat
 export async function POST(req: Request) {
   try {
     const { fileKey } = await req.json();
@@ -11,6 +12,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Apelăm metoda de ștergere din UploadThing API
     await utapi.deleteFiles(fileKey);
 
     return NextResponse.json({ success: true });

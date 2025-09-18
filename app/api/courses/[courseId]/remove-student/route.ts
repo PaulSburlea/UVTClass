@@ -12,19 +12,20 @@ export async function POST(
 
   const { studentId } = await req.json();
 
-  // Verifică dacă userul curent este profesorul acelui curs
+  // Preluăm cursul și lista de utilizatori asociați
   const course = await db.classroom.findUnique({
     where: { id: params.courseId },
     include: { users: true },
   });
 
-  // Tipăm `u` ca obiect cu proprietățile folosite
+  // Verificăm dacă utilizatorul curent este profesor în acest curs
   const isTeacher = course?.users.some(
     (u: { userId: string; role: string }) =>
       u.userId === userId && u.role === "TEACHER"
   );
   if (!isTeacher) return new NextResponse("Forbidden", { status: 403 });
 
+  // Ștergem asocierea studentului din tabelă
   await db.classroom.update({
     where: { id: params.courseId },
     data: {

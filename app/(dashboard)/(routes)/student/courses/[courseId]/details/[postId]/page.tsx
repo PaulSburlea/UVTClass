@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { BookOpen } from "lucide-react";
 import { currentUser } from "@clerk/nextjs/server";
+
 import { CommentSection } from "@/app/(dashboard)/(routes)/teacher/courses/[courseId]/details/[postId]/_components/comment-section";
 import { PostMaterials } from "@/app/(dashboard)/(routes)/teacher/posts/_components/post-materials";
 
@@ -17,11 +18,11 @@ export default async function StudentPostDetails(props: Props) {
   const params = await props.params;
   const { courseId, postId, postAuthorId } = params;
 
-  // 1) Îl folosim pe Clerk pentru a obține avatarul
+  // Obține utilizatorul curent pentru avatar
   const user = await currentUser();
   const avatarUrl = user?.imageUrl ?? "/default-avatar.png";
 
-  // 2) Luăm postarea + materiale
+  // Încarcă post-ul și materialele asociate din baza de date
   const post = await db.post.findUnique({
     where: { id: postId },
     include: { materials: true },
@@ -30,7 +31,6 @@ export default async function StudentPostDetails(props: Props) {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
       <div className="border-b pb-4 flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white">
@@ -51,10 +51,19 @@ export default async function StudentPostDetails(props: Props) {
         </div>
       </div>
 
-    <PostMaterials post={{ ...post, content: post.content ?? undefined }} materials={post.materials} />
+      {/* Conținut și materiale atașate */}
+      <PostMaterials
+        post={{ ...post, content: post.content ?? undefined }} 
+        materials={post.materials}
+      />
 
-      {/* Comentarii */}
-      <CommentSection postId={postId} avatarUrl={avatarUrl} postAuthorId={postAuthorId} classroomId={courseId}/>
+      {/* Secțiunea de comentarii */}
+      <CommentSection 
+        postId={postId} 
+        avatarUrl={avatarUrl} 
+        postAuthorId={postAuthorId} 
+        classroomId={courseId}
+      />
     </div>
   );
 }

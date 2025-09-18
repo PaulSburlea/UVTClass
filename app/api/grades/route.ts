@@ -1,12 +1,9 @@
-// frontend/app/api/grades/route.ts
-
 import { NextRequest, NextResponse }    from "next/server";
 import { db }                          from "@/lib/db";
 import { GradeCategory } from "@/app/types/grade";
 import { auth, clerkClient }           from "@clerk/nextjs/server";
 import { sendMail }                    from "@/lib/mailer";
 
-// etichete prietenoase pentru categorii
 const categoryLabels: Record<GradeCategory, string> = {
   EXAM:     "Examen",
   QUIZ:     "Test",
@@ -25,8 +22,9 @@ interface GradePayload {
   position:  number;
 }
 
-// GET: aduce notele ordonate după `position`
 export async function GET(req: NextRequest) {
+  // Primeste courseId și studentId din query params și returneaza lista de note pentru acel student în curs,
+  // ordonată după câmpul `position`
   const { searchParams } = new URL(req.url);
   const courseId  = searchParams.get("courseId");
   const studentId = searchParams.get("studentId");
@@ -43,8 +41,8 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(grades);
 }
 
-// DELETE: șterge o notă după id
 export async function DELETE(req: NextRequest) {
+  // Primeste id-ul notei din query param și o șterge din baza de date
   const { searchParams } = new URL(req.url);
   const gradeId = searchParams.get("id");
   if (!gradeId) {
@@ -54,18 +52,15 @@ export async function DELETE(req: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-// POST: înlocuiește toate notele și apoi notifică studentul
 export async function POST(req: NextRequest) {
-  // 1. Autentificare
+  // Autentifica: dacă nu este userLogat, refuza cu 401
   const { userId } = await auth();
   if (!userId) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  // 2. Construim client Clerk
   const client = await clerkClient();
 
-  // 3. Parse body
   const { courseId, studentId, grades } = (await req.json()) as {
     courseId: string;
     studentId: string;
@@ -75,10 +70,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  // 4. Șterge toate notele existente
+  // Șterge toate notele existente pentru acel student în curs
   await db.grade.deleteMany({ where: { courseId, studentId } });
 
-  // 5. Creează noile note cu poziție
+  // Creeaza noile înregistrări de note, poziționate după indexul din array
   const created = await db.grade.createMany({
     data: grades.map((g, idx) => ({
       courseId,
@@ -92,7 +87,6 @@ export async function POST(req: NextRequest) {
     })),
   });
 
-  // 6. Preia numele cursului și id‑ul profesorului
   const classroom = await db.classroom.findUnique({
     where:  { id: courseId },
     select: { name: true, userId: true },
@@ -103,28 +97,24 @@ if (!classroom || !classroom.userId) {
 }
 const profId = classroom.userId;
 
-  // 7. Preia numele profesorului din Clerk
   const prof     = await client.users.getUser(profId);
   const profName = [prof.firstName, prof.lastName].filter(Boolean).join(" ") || "Profesor";
 
-  // 8. Construiește sumarul cu etichete prietenoase
   const lines = grades
     .map(g => `• ${categoryLabels[g.category]} "${g.title}": ${g.score} (pond. ${g.weight}%)`)
     .join("<br/>");
 
-  // 9. Obține datele studentului
   const student = await client.users.getUser(studentId);
   const to = student.primaryEmailAddress?.emailAddress
     ?? student.emailAddresses[0]?.emailAddress
     ?? "";
   const studentName = [student.firstName, student.lastName].filter(Boolean).join(" ") || "Student";
 
-  // 10. Link către pagina de note (dev/prod)
   const url       = new URL(req.url);
   const baseUrl   = process.env.NEXT_PUBLIC_APP_URL ?? url.origin;
   const gradesUrl = `${baseUrl}/student/grades/${courseId}`;
 
-  // 11. Trimite emailul
+  // Trimite email către student cu notificarea despre actualizarea notelor
   sendMail({
     to,
     fromName: profName,
@@ -141,6 +131,5 @@ const profId = classroom.userId;
     console.error("Eroare la trimiterea email-ului:", err);
   });
 
-  // 12. Răspuns
   return NextResponse.json({ success: true, count: created.count });
 }

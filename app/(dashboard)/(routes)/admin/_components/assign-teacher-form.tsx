@@ -12,19 +12,27 @@ export default function AssignTeacherForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    const trimmedEmail = email.trim();
+
+    // Validare simplă a formatului de email
+    if (!/\S+@\S+\.\S+/.test(trimmedEmail)) {
+      toast.error("Te rog introdu un email valid");
+      setLoading(false);
+      return;
+    }
 
     try {
+      // Atribuire rol prin API
       const res = await fetch("/api/admin/assign-teacher", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: trimmedEmail }),
       });
 
       if (res.ok) {
         toast.success("Rolul Teacher a fost atribuit!");
-        setEmail("");
-        // Revalidate lista de profesori
-        mutate("/api/admin/teachers");
+        setEmail("");   // Resetează formularul
+        mutate("/api/admin/teachers");   // Reîncarcă lista de profesori
       } else {
         const { error } = await res.json();
         toast.error(error || "Eroare la atribuire");

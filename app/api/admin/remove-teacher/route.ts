@@ -21,7 +21,6 @@ export async function DELETE(req: Request) {
 
   try {
     await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      // 1) Găsește toate classroom-urile ale teacher-ului
       const classrooms = await tx.classroom.findMany({
         where: { userId: teacherId },
         select: { id: true },

@@ -1,17 +1,15 @@
-// app/(dashboard)/(routes)/teacher/grades/[courseId]/[studentId]/page.tsx
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 
-import type { GradeCategory } from "@/app/types/grade";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "react-hot-toast";
 import { ArrowLeft } from "lucide-react";
+
+import type { GradeCategory } from "@/app/types/grade";
 
 interface GradeEntry {
   id?: string;
@@ -61,6 +59,7 @@ export default function StudentGradePage() {
     Record<number, (keyof GradeEntry)[]>
   >({});
 
+  // La montare, preluăm notele existente din API
   useEffect(() => {
     if (!courseId || !studentId) return;
     fetch(`/api/grades?courseId=${courseId}&studentId=${studentId}`)
@@ -79,6 +78,7 @@ export default function StudentGradePage() {
       .catch(() => toast.error("Eroare la încărcarea notelor."));
   }, [courseId, studentId]);
 
+  // Calculăm suma ponderilor
   const totalWeight = useMemo(
     () =>
       entries.reduce(
@@ -87,6 +87,8 @@ export default function StudentGradePage() {
       ),
     [entries]
   );
+
+  // Media ponderată a notelor
   const weightedAverage = useMemo(() => {
     if (totalWeight === 0) return 0;
     return (
@@ -100,6 +102,7 @@ export default function StudentGradePage() {
     );
   }, [entries, totalWeight]);
 
+  // Adaugă un rând gol în tabel
   function addRow() {
     setEntries((prev) => [
       ...prev,
@@ -113,6 +116,7 @@ export default function StudentGradePage() {
     ]);
   }
 
+  // Șterge un rând; dacă are id, face DELETE API, altfel doar din UI
   function removeRow(idx: number) {
     const entry = entries[idx];
     if (entry.id) {
@@ -127,6 +131,7 @@ export default function StudentGradePage() {
     }
   }
 
+  // Actualizează valoarea unui câmp în rândul idx
   function updateRow(
     idx: number,
     field: keyof GradeEntry,
@@ -144,11 +149,13 @@ export default function StudentGradePage() {
         const newValue = typeof value === "string" ? parseFloat(value) : value;
         if (isNaN(newValue)) return prev;
 
+        // Nota trebuie să fie între 0 și 10
         if (field === "score" && (newValue < 0 || newValue > 10)) {
           setTimeout(() => toast.error("Nota trebuie să fie între 0 și 10."), 0);
           return prev;
         }
 
+        // Ponderea trebuie să fie între 0 și 100
         if (field === "weight") {
           const sumExcl = next.reduce((sum, e, i) => {
             if (i === idx) return sum;
@@ -172,8 +179,11 @@ export default function StudentGradePage() {
     });
   }
 
+  // La submit, validăm completitudinea și trimitem payload-ul
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Verificăm fiecare rând pentru câmpuri goale
     const newInvalid: Record<number, (keyof GradeEntry)[]> = {};
     entries.forEach((entry, i) => {
       const empties: (keyof GradeEntry)[] = [];
@@ -183,6 +193,7 @@ export default function StudentGradePage() {
       if (entry.weight === "") empties.push("weight");
       if (empties.length) newInvalid[i] = empties;
     });
+
     if (Object.keys(newInvalid).length) {
       setInvalidFields(newInvalid);
       toast.error("Completează toate câmpurile înainte de salvare.");
@@ -190,6 +201,7 @@ export default function StudentGradePage() {
     }
     setInvalidFields({});
 
+    // Pregătim datele pentru API (convertim string->number unde trebuie)
     const sanitized: GradePayload[] = entries.map((e, idx) => ({
       id: e.id,
       category: e.category,
@@ -200,6 +212,7 @@ export default function StudentGradePage() {
       position: idx,
     }));
 
+    // Trimitem POST cu toate notele
     await fetch("/api/grades", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -212,7 +225,7 @@ export default function StudentGradePage() {
 
   return (
     <>
-      {/* Buton Înapoi */}
+    {/* Buton Înapoi */}
       <div className="max-w-4xl mx-auto px-4 mt-4">
         <Link href={`/teacher/grades/${courseId}`} legacyBehavior>
           <Button variant="ghost" size="sm" className="flex items-center">
@@ -221,10 +234,11 @@ export default function StudentGradePage() {
         </Link>
       </div>
 
-      {/* Card pentru notare */}
+      {/* Card cu statistici și tabelul de notare */}
       <Card className="max-w-full mx-4 md:mx-auto mt-2">
         <CardHeader>
           <CardTitle>Notarea studentului</CardTitle>
+          {/* Afișăm media ponderată și totalul de ponderi */}
           <div className="mt-2 text-base font-medium text-gray-700 md:text-lg">
             Media ponderată: {weightedAverage.toFixed(2)} / 10
           </div>
@@ -232,9 +246,9 @@ export default function StudentGradePage() {
             Total pondere: {totalWeight}%
           </div>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
-            {/* Wrapper pentru scroll orizontal pe mobil */}
             <div className="overflow-x-auto">
               <table className="w-full table-auto min-w-[600px] border-collapse rounded-lg overflow-hidden">
                 <thead className="bg-gray-100">
@@ -253,6 +267,7 @@ export default function StudentGradePage() {
                       key={i}
                       className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
+                      {/* Câmpul de input pentru categorie */}
                       <td className="p-1">
                         <select
                           value={row.category}
@@ -268,6 +283,8 @@ export default function StudentGradePage() {
                           ))}
                         </select>
                       </td>
+
+                      {/* Câmpul de input pentru titlu */}
                       <td className="p-1">
                         <input
                           type="text"
@@ -281,6 +298,8 @@ export default function StudentGradePage() {
                             }`}
                         />
                       </td>
+
+                      {/* Câmpul de input pentru data */}
                       <td className="p-1">
                         <input
                           type="date"
@@ -294,6 +313,8 @@ export default function StudentGradePage() {
                             }`}
                         />
                       </td>
+
+                      {/* Câmpul de input pentru notă */}
                       <td className="p-1">
                         <input
                           type="number"
@@ -308,6 +329,8 @@ export default function StudentGradePage() {
                             }`}
                         />
                       </td>
+
+                      {/* Câmpul de input pentru pondere */}
                       <td className="p-1">
                         <input
                           type="number"
@@ -322,6 +345,8 @@ export default function StudentGradePage() {
                             }`}
                         />
                       </td>
+
+                      {/* Buton ștergere rând */}
                       <td className="p-1 text-center">
                         <button
                           type="button"
@@ -337,6 +362,7 @@ export default function StudentGradePage() {
               </table>
             </div>
 
+            {/* Butoane Add Row și Submit */}
             <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:justify-between">
               <Button variant="outline" type="button" onClick={addRow} className="w-full md:w-auto">
                 + Adaugă evaluare

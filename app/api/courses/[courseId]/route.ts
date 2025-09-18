@@ -1,5 +1,3 @@
-// app/api/courses/[courseId]/route.ts
-
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
@@ -14,10 +12,10 @@ export async function PATCH(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // „params” e un Promise, de aceea folosim await:
     const { courseId } = await params;
     const values = await request.json();
 
+    // Actualizăm cursul doar dacă utilizatorul este proprietar/are permisiune
     const course = await db.classroom.update({
       where: {
         id: courseId,
@@ -45,8 +43,8 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Aşteptăm params ca să extragem courseId
     const { courseId } = await params;
+    // Ștergem cursul doar dacă utilizatorul este proprietar
     const course = await db.classroom.delete({
       where: {
         id: courseId,

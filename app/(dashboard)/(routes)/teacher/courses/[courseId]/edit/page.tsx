@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
 
-
 import { IconBadge } from '@/components/icon-badge';
 import { db } from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
 import { LayoutDashboard } from 'lucide-react';
 import { redirect } from 'next/navigation';
+
 import { TitleForm } from '../_components/title-form';
 import { SectionForm } from '../_components/section-form';
 import { SubjectForm } from '../_components/subject-form';
@@ -22,20 +22,24 @@ const CourseIdPage = async (
     const params = await props.params;
     const { userId } = await auth();
 
+    // Verificam daca utilizatorul este autentificat
     if (!userId) {
         return redirect("/");
     }
 
+    // Preluăm datele cursului din baza de date
     const course = await db.classroom.findUnique({
         where: {
             id: params.courseId
         }
     });
 
+    // Dacă nu există cursul cu acel ID, redirecționăm la root
     if (!course) {
         return redirect("/");
     }
 
+    // Verificăm câmpurile obligatorii pentru finalizare
     const requiredFields = [
         course.name,
         course.section,
@@ -51,6 +55,7 @@ const CourseIdPage = async (
 
     return (
         <div className='p-6'>
+            {/* Header pagină */}
             <div className='flex items-center justify-between'>
                 <div className='flex flex-col gap-y-2'>
                     <h1 className='text-2xl font-medium'>
@@ -61,6 +66,8 @@ const CourseIdPage = async (
                     </span>
                 </div>
             </div>
+
+            {/* Formulare de configurare într-un grid responsive */}
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mt-16'>
                 <div>
                     <div className='flex items-center gap-x-2'>
@@ -69,6 +76,8 @@ const CourseIdPage = async (
                             Personalizați-vă cursul
                         </h2>
                     </div>
+
+                    {/* Formularele pentru fiecare câmp al cursului */}
                     <TitleForm
                         initialData={course}
                         courseId={course.id}
@@ -85,6 +94,8 @@ const CourseIdPage = async (
                         initialData={course}
                         courseId={course.id}
                     />
+
+                    {/* Butonul de finalizare, activat când toate câmpurile sunt completate */}
                     <CourseFinalize />
                 </div>
             </div>

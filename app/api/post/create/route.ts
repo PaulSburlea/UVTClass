@@ -1,11 +1,8 @@
-// frontend/app/api/post/create/route.ts
-
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import type { MaterialType } from "@/app/types/material";
 import { sendMail } from "@/lib/mailer";
-
 import { utapi } from "@/server/uploadthing";
 
 export async function POST(req: Request) {
@@ -25,6 +22,7 @@ export async function POST(req: Request) {
     return new NextResponse("Missing required data", { status: 400 });
   }
 
+  // Creăm postarea în baza de date
   const post = await db.post.create({
     data: {
       authorId: userId,
@@ -35,6 +33,7 @@ export async function POST(req: Request) {
     },
   });
 
+  // Procesăm link-urile externe trimise (YOUTUBE / DRIVE / LINK)
   const links = formData.getAll("links") as string[];
   const types = formData.getAll("types") as string[];
   for (let i = 0; i < links.length; i++) {
@@ -44,6 +43,7 @@ export async function POST(req: Request) {
       typeStr = "LINK";
     }
 
+    // Creăm material extern asociat postului
     await db.material.create({
       data: {
         title: "Material extern",
@@ -55,6 +55,7 @@ export async function POST(req: Request) {
     });
   }
 
+  // Procesăm fișiere noi: upload prin UploadThing și salvare în baza de date
   const files = formData.getAll("files") as File[];
   const fileNames = formData.getAll("fileNames") as string[];
 
@@ -72,6 +73,7 @@ export async function POST(req: Request) {
         const uf = res.data;
         const originalName = fileNames[i] || uf.key;
 
+        // Creăm material de tip FILE în baza de date
         await db.material.create({
           data: {
             title: originalName,
@@ -90,7 +92,8 @@ export async function POST(req: Request) {
     }
   }
 
-  // ─── Notificări email către studenți ──────────────────────────────
+  // Notificări email către studenți
+  // Preluăm lista de studenți din userClassroom pentru acest curs
   const enrollments = await db.userClassroom.findMany({
     where: { classroomId: courseId, role: "STUDENT" },
     select: { userId: true },
@@ -102,6 +105,7 @@ export async function POST(req: Request) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
   const linkToPost = `${baseUrl}/student/courses/${courseId}/details/${post.id}`;
 
+  // Pregătim trimiterea email-urilor către fiecare student
   const emailJobs = students.map((stu) => {
     const to =
       stu.primaryEmailAddress?.emailAddress ??
@@ -124,6 +128,7 @@ export async function POST(req: Request) {
     });
   });
 
+  // Trimitem toate email-urile în paralel și logăm eventualele eșecuri
   const emailResults = await Promise.allSettled(emailJobs);
   emailResults.forEach((r, i) => {
     if (r.status === "rejected") {

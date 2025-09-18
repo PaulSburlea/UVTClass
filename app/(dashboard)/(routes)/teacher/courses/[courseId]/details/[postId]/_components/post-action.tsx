@@ -10,9 +10,11 @@ import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
+
 import { EditPostModal } from "../../../../../posts/_components/edit-post-modal";
 import { ConfirmModal } from "../../../../../../../../../components/confirm-modal";
-import { toast } from "react-hot-toast";
+
 
 interface PostActionsProps {
   courseId: string;
@@ -41,11 +43,13 @@ export const PostActions = ({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
 
+  // Când utilizatorul alege să șteargă, păstrăm ID-ul și deschidem modalul
   const handleDeleteClick = (id: string) => {
     setPostToDelete(id);
     setIsConfirmOpen(true);
   };
 
+  // Aici facem cererea DELETE către server
   const confirmDelete = async () => {
     if (!postToDelete) return;
 
@@ -70,16 +74,20 @@ export const PostActions = ({
 
   return (
     <>
+      {/* Butonul cu cele trei puncte pentru opțiuni */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0 hover:rounded-2xl">
             <MoreVertical className="!h-5 !w-5" />
           </Button>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent align="end">
+          {/* Deschide modalul de edit */}
           <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
             Editează
           </DropdownMenuItem>
+          {/* Setează starea pentru ștergere și afișează modalul de confirmare */}
           <DropdownMenuItem
             onClick={() => handleDeleteClick(postId)}
             className="text-red-600"
@@ -89,6 +97,7 @@ export const PostActions = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Modal pentru editarea postării; primește toate datele necesare */}
       <EditPostModal
         post={{
           id: postId,
@@ -104,6 +113,7 @@ export const PostActions = ({
         }}
       />
 
+      {/* Modalul de confirmare ștergere */}
       <ConfirmModal
         isOpen={isConfirmOpen}
         onCancel={() => setIsConfirmOpen(false)}

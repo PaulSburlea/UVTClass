@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+// Componentă pentru afișarea logo-ului aplicației
 export const Logo = () => {
     return (
         <Image
