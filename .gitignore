@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+/__tests__
+/__mocks__
+/cypress
+cypress.config.ts
+postman_smoke_tests.txt
+tete.txt
 
 # next.js
 /.next/
@@ -41,6 +47,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
+# uploads
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# configs you don’t want on GitHub
+eslint.config.mjs
+jest.config.ts
+jest.setup.ts
