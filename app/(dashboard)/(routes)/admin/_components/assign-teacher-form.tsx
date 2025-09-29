@@ -2,19 +2,19 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { useSWRConfig } from "swr";
 
-export default function AssignTeacherForm() {
+interface Props {
+  mutateTeachers: () => void;
+}
+
+export default function AssignTeacherForm({ mutateTeachers }: Props) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const { mutate } = useSWRConfig();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     const trimmedEmail = email.trim();
-
-    // Validare simplă a formatului de email
     if (!/\S+@\S+\.\S+/.test(trimmedEmail)) {
       toast.error("Te rog introdu un email valid");
       setLoading(false);
@@ -22,7 +22,6 @@ export default function AssignTeacherForm() {
     }
 
     try {
-      // Atribuire rol prin API
       const res = await fetch("/api/admin/assign-teacher", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -31,8 +30,8 @@ export default function AssignTeacherForm() {
 
       if (res.ok) {
         toast.success("Rolul Teacher a fost atribuit!");
-        setEmail("");   // Resetează formularul
-        mutate("/api/admin/teachers");   // Reîncarcă lista de profesori
+        setEmail("");
+        mutateTeachers();
       } else {
         const { error } = await res.json();
         toast.error(error || "Eroare la atribuire");
