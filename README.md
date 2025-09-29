@@ -1,48 +1,103 @@
-# Platformă de management academic pentru facultăți
+# UVTClass  
 
-**Proiect UVTClass – Next.js cu TypeScript și Tailwind, backend MySQL**
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)  
+[![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev/)  
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)  
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38bdf8?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)  
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2d3748?logo=prisma)](https://www.prisma.io/)  
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169e1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)  
+[![Clerk](https://img.shields.io/badge/Auth-Clerk-4a90e2?logo=clerk)](https://clerk.com/)  
 
-## Descriere
-UVTClass este o aplicație web pentru gestionarea cursurilor și utilizatorilor (admin, profesori, studenți), cu autentificare, panou de control, comentarii și upload de fișiere, folosind Next.js (App Router), Clerk, Prisma și MySQL.
+---
 
-## Pre-rechizite
-- Node.js instalat (necesar pentru npm)
-- npm
-- MySQL (local sau remote)
+A modern web application designed to manage courses, classrooms, and student–teacher interactions at **West University of Timișoara**.  
+Built with **Next.js 14, TypeScript, Tailwind CSS, Prisma, and Clerk**, UVTClass provides a smooth user experience with a scalable architecture for academic environments.  
 
-## Variabile de mediu
-Copiază `env.example` în `.env` și completează:
-```env
-DATABASE_URL=
-NEXTAUTH_SECRET=
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
-NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
-NEXT_PUBLIC_BASE_URL=
-DATABASE_URL=
-UPLOADTHING_TOKEN=
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=
-NEXT_PUBLIC_GOOGLE_API_KEY=
-SMTP_HOST=
-SMTP_PORT=
-SMTP_SECURE=
-SMTP_USER=
-SMTP_PASS=
-SMTP_FROM=
+---
 
+## 🚀 Features  
 
-## Instalare și migrații
-git clone <repo-url>
-cd proiect
+- 👨‍🏫 **Teacher dashboard** – create, edit, and manage courses  
+- 🎓 **Student dashboard** – enroll and access course materials  
+- 📂 **Classroom management** – structured views for enrolled and available courses  
+- 🔑 **Authentication & authorization** with Clerk  
+- 📊 **Responsive UI** with Tailwind CSS  
+- ⚡ **Optimized database access** using Prisma & PostgreSQL  
+- 🌐 **Next.js App Router** with server + client components  
+
+---
+
+## 🛠️ Tech Stack  
+
+- **Frontend:** [Next.js 14](https://nextjs.org/), [React](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)  
+- **Backend:** Next.js API Routes, [Prisma ORM](https://www.prisma.io/)  
+- **Database:** PostgreSQL  
+- **Auth:** [Clerk](https://clerk.com)  
+- **Other:** TypeScript, Lucide Icons, Shadcn UI  
+
+---
+
+## 📦 Installation & Setup  
+
+Clone the repository:  
+```bash
+git clone https://github.com/PaulSburlea/UVTClass.git
+cd UVTClass
+```
+
+Install dependencies:
+```bash
 npm install
-# Se configurează .env cu variabilele necesare
+```
 
-# npx prisma migrate dev --name init
+Set up environment variables in a .env file:
+```bash
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/uvtclass
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your-clerk-publishable-key
+CLERK_SECRET_KEY=your-clerk-secret-key
+```
 
-## Rulare locală
+Run database migrations:
+```bash
+npx prisma migrate dev
+```
+
+Start development server:
+```bash
 npm run dev
+```
 
-Se accesează: http://localhost:3000
+Build for production:
+```bash
+npm run build
+npm run start
+```
+
+📖 Project Structure
+```bash
+app/
+ ├─ (dashboard)/         # Teacher & Student dashboards
+ │   ├─ _components/     # Reusable UI components
+ │   └─ page.tsx
+ ├─ api/                 # API routes
+ ├─ components/          # Shared components
+ └─ lib/                 # Utils & database helpers
+ ```
+
+📅 Roadmap
+ Implement notifications system
+
+ Add file upload for course materials
+
+ Improve analytics for teachers
+
+ Enhance responsive design for mobile
+
+## 🤝 Contributing
+Contributions are welcome!
+
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -m "Add new feature"`)
+4. Push to the branch (`git push origin feature/my-feature`)
+5. Open a Pull Request
