@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-
 import type { Material } from "@/app/types/material";
 
 interface PostMaterialsProps {
@@ -64,10 +63,11 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
   }, [materials]);
 
   const renderThumb = (m: Material) => {
-    const base = "w-24 h-16 object-cover flex-shrink-0";
+    const base = "w-24 h-16 object-cover flex-shrink-0 rounded-l-xl";
     const filename = m.filePath || m.name || "";
     const ext = filename.split(".").pop()?.toLowerCase();
 
+    // YouTube
     if (m.type === "YOUTUBE" && m.url) {
       const vid = extractYouTubeId(m.url);
       return vid ? (
@@ -76,11 +76,13 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
           alt="YouTube thumbnail"
           width={96}
           height={64}
-          className={base + " rounded-l-xl"}
+          className={base}
+          loading="lazy"
         />
       ) : null;
     }
 
+    // Link extern
     if (m.type === "LINK") {
       const prev = linkPreviews[m.id];
       return prev?.image ? (
@@ -89,19 +91,20 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
           alt={prev.title}
           width={96}
           height={64}
-          className={base + " rounded-l-xl"}
+          className={base}
+          loading="lazy"
         />
       ) : (
-        <div className={base + " bg-gray-200 rounded-l-xl flex items-center justify-center text-2xl"}>
-          🔗
-        </div>
+        <div className={base + " bg-gray-200 flex items-center justify-center text-2xl"}>🔗</div>
       );
     }
 
+    // Imagini
     if (m.type === "FILE" && m.url && ["jpg", "jpeg", "png", "gif"].includes(ext || "")) {
-      return <Image src={m.url} alt={filename} width={96} height={64} className={base + " rounded-l-xl"} />;
+      return <Image src={m.url} alt={filename} width={96} height={64} className={base} loading="lazy" />;
     }
 
+    // PDF / Text / Doc / XLS / PPT / Altele
     if (m.type === "FILE" && m.url) {
       const officeExts = ["doc", "docx", "xls", "xlsx", "ppt", "pptx"];
       const label = ["pdf"].includes(ext || "")
@@ -115,6 +118,7 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         : ["ppt", "pptx"].includes(ext || "")
         ? "PPT"
         : "Fișier";
+
       const color = ["pdf"].includes(ext || "")
         ? "bg-red-100 text-red-500"
         : ["txt", "md"].includes(ext || "")
@@ -128,25 +132,20 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
         : "bg-gray-200 text-gray-600";
 
       return (
-        <div className={`${base} ${color} flex items-center justify-center rounded-l-xl`}>
+        <div className={`${base} ${color} flex items-center justify-center`}>
           <span className="font-bold text-sm">{label}</span>
         </div>
       );
     }
 
-    return (
-      <div className={base + " bg-gray-200 flex items-center justify-center rounded-l-xl"}>
-        📁
-      </div>
-    );
+    return <div className={base + " bg-gray-200 flex items-center justify-center"}>📁</div>;
   };
 
   const getFileLink = (m: Material) => {
     if (!m.url) return "#";
-    const filename = m.filePath || m.name || "";
-    const ext = filename.split(".").pop()?.toLowerCase();
+    const ext = (m.filePath || m.name || "").split(".").pop()?.toLowerCase();
 
-    // Office Viewer pentru Word / Excel / PowerPoint
+    // Office Viewer pentru Word / Excel / PPT
     if (["doc", "docx", "xls", "xlsx", "ppt", "pptx"].includes(ext || "")) {
       return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(m.url)}`;
     }
@@ -158,8 +157,7 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
     if (m.type === "YOUTUBE") return "Videoclip YouTube";
     if (m.type === "LINK") return "Link extern";
     if (m.type === "FILE") {
-      const filename = m.filePath || m.name || "Fișier necunoscut";
-      const ext = filename.split(".").pop()?.toUpperCase();
+      const ext = (m.filePath || m.name || "").split(".").pop()?.toUpperCase();
       return ext ? `.${ext}` : "";
     }
     if (m.type === "DRIVE") return "Google Drive";
@@ -173,10 +171,14 @@ export const PostMaterials: React.FC<PostMaterialsProps> = ({ materials, post })
           <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
         </div>
       )}
+
       <div className="mt-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {materials.map((m) => (
-            <div key={m.id} className="flex bg-white border rounded-xl shadow-sm hover:shadow-lg transition overflow-hidden">
+            <div
+              key={m.id}
+              className="flex bg-white border rounded-xl shadow-sm hover:shadow-lg transition overflow-hidden"
+            >
               {renderThumb(m)}
               <div className="flex flex-col justify-center px-4 py-2 overflow-hidden w-full">
                 <a
